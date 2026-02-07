@@ -1,6 +1,8 @@
-# Personal Genomics v4.1.0
+# Personal Genomics v4.2.0
 
 Privacy-first local DNA analysis for AI agents. Comprehensive genetic analysis with **1600+ validated markers** across **30 categories** covering pharmacogenomics, disease risk, carrier status, haplogroups, ancestry, hereditary cancer, autoimmune conditions, pain sensitivity, lifestyle optimization, and more.
+
+**NEW in v4.2.0: Interactive HTML Dashboard!**
 
 ![Logo](logo.svg)
 
@@ -98,6 +100,35 @@ Privacy-first local DNA analysis for AI agents. Comprehensive genetic analysis w
 - Omega-3 conversion efficiency (FADS1)
 - Iron overload risk (HFE)
 
+### New in v4.2.0
+
+🖥️ **Interactive Web Dashboard**
+- Beautiful, responsive HTML visualization
+- Auto-generated with every analysis
+- No external dependencies - works offline
+- Dark mode support
+- Sections: Overview, Pharmacogenomics, Health Risks, Traits, Ancestry, Carrier Status, Sleep, Athletic, UV/Skin, Dietary
+- Export to PDF (print functionality)
+- Drag & drop JSON loading
+
+🛡️ **Code Quality Improvements**
+- Complete type hints throughout codebase
+- TypedDict for complex return types
+- Comprehensive docstrings (Google style)
+- Defensive programming with input validation
+- Graceful handling of malformed data
+- User-friendly error messages
+- 200+ automated tests
+
+📊 **Enhanced Visualizations**
+- PRS percentile bars with color coding
+- Power vs Endurance athletic gauge
+- Sleep chronotype display
+- Skin type estimation visuals
+- Dietary interaction matrix
+- Collapsible sections
+- Search/filter functionality
+
 🏃 **Athletic Performance Profiling**
 - Endurance vs power composite score
 - Key markers: ACTN3, ACE, PPARGC1A
@@ -194,6 +225,7 @@ from pdf_report import generate_pdf_report
 
 Reports are saved to `~/dna-analysis/reports/`:
 
+- `dashboard.html` - **NEW!** Interactive visualization dashboard
 - `agent_summary.json` - AI-optimized output with priority-sorted actionable items
 - `full_analysis.json` - Complete analysis data
 - `report.txt` - Human-readable report
