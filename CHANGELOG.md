@@ -5,6 +5,69 @@ All notable changes to the Personal Genomics skill will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.0] - 2026-02-07
+
+### Added
+
+#### 1000 Genomes Population Comparison
+- New `references/1000genomes_frequencies.json` - Population frequency data for 20+ markers from 1000 Genomes Phase 3
+- New `markers/population_comparison.py` module with:
+  - `compare_to_populations()` - Compare genotypes against all 20 reference populations
+  - `find_most_similar_populations()` - Rank populations by genetic similarity
+  - `get_marker_population_context()` - Get detailed population context per marker
+  - `generate_population_comparison_report()` - Text report generation
+  - `get_population_comparison_json()` - Structured JSON for dashboard
+- 20 reference populations across 5 superpopulations (EUR, AFR, EAS, SAS, AMR)
+- Visual bar charts showing genotype frequencies by population
+- Transparent methodology - users see actual data, not black-box percentages
+
+#### Ancient DNA Signals
+- New `references/ancient_dna_markers.json` - Markers with ancient DNA associations
+- New `markers/ancient_ancestry.py` module with:
+  - `detect_ancient_signals()` - Find matches to ancient populations
+  - `generate_ancient_dna_report()` - Narrative report with historical context
+  - `get_ancient_dna_json()` - Structured JSON for dashboard
+  - `get_neanderthal_report()` - Detailed Neanderthal introgression analysis
+- Coverage of 6 ancient populations:
+  - Western Hunter-Gatherers (WHG) - Mesolithic Europe
+  - Eastern Hunter-Gatherers (EHG) - Mesolithic Russia
+  - Anatolian Neolithic Farmers (ANF) - Early farmers
+  - Yamnaya/Steppe Pastoralists - Bronze Age herders
+  - Neanderthal introgression markers
+  - Denisovan introgression markers
+- Timeline visualization showing human migration history
+- PMID citations from published ancient DNA studies
+
+#### Enhanced Dashboard
+- New "🌍 Population Comparison" section with:
+  - Most Similar Populations ranking with similarity scores
+  - Per-marker frequency breakdown with visual bars
+  - Continental summary view
+  - "Why No Percentages?" educational explainer
+  - Tab-based navigation between views
+- New "🏛️ Ancient DNA" section integrated with existing ancestry
+- Updated navigation with new sections
+- Added CSS for population bars and ancient DNA timeline
+
+#### Documentation
+- New `references/METHODOLOGY.md` explaining:
+  - Why we show comparisons instead of percentages
+  - 1000 Genomes Project reference
+  - Ancient DNA study sources
+  - Neanderthal introgression context
+  - How to interpret results
+  - Limitations of consumer DNA testing
+
+### Changed
+- Updated version to 4.4.0 across all files
+- Dashboard now shows population comparison alongside ancestry signals
+- Agent summary now includes `population_comparison`, `ancient_dna`, and `neanderthal` sections
+- Updated SKILL.md with v4.4.0 feature highlights
+
+### Fixed
+- Test compatibility for ancestry module API changes
+- Backwards compatibility aliases for `ANCESTRY_INFORMATIVE_MARKERS`
+
 ## [4.2.0] - 2026-02-07
 
 ### Added

@@ -28,6 +28,7 @@ AncestryDNA*.txt
 reports/
 *.json
 !snp_databases/*.json
+!references/*.json
 !haplogroup_markers.json
 
 # OS

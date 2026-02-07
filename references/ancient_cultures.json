@@ -1,0 +1,656 @@
+{
+  "_metadata": {
+    "description": "Culture-level genetic profiles for ancient populations",
+    "version": "1.0.0",
+    "sources": [
+      "Haak et al. 2015 - Massive migration from the steppe",
+      "Olalde et al. 2018 - The Beaker phenomenon",
+      "Lazaridis et al. 2014/2016 - Ancient human genomes",
+      "Margaryan et al. 2020 - Viking world",
+      "Mathieson et al. 2015 - Genome-wide patterns of selection"
+    ],
+    "notes": "Genetic profiles based on published ancient DNA studies. Ancestry percentages are approximate and vary by individual/region."
+  },
+  
+  "cultures": {
+    "whg": {
+      "id": "whg",
+      "name": "Western Hunter-Gatherers",
+      "abbreviation": "WHG",
+      "period": "~15,000-5,000 BCE",
+      "period_start": -15000,
+      "period_end": -5000,
+      "regions": ["Western Europe", "Central Europe", "British Isles", "Iberia", "Italy"],
+      "map_color": "#2E86AB",
+      "description": "The indigenous population of Western and Central Europe before the arrival of farmers. Descended from people who survived the Last Glacial Maximum in southern refugia (Iberia, Italy, Balkans). Had a distinctive phenotype: dark skin combined with blue eyes.",
+      "lifestyle": "Hunter-gatherer, fishing, forest foraging",
+      "subsistence": ["Hunting (deer, aurochs, boar)", "Fishing", "Gathering nuts, berries, roots"],
+      "technology": "Mesolithic microliths, dugout canoes, fishing equipment",
+      "genetic_profile": {
+        "ancestry_components": {
+          "whg": "~100%"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["I2", "C1a2"],
+          "mt_dna": ["U5", "U4", "U2"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Dark brown",
+        "eyes": "Blue (nearly universal)",
+        "hair": "Dark",
+        "lactose_tolerance": "Absent",
+        "height": "Short to medium"
+      },
+      "diagnostic_snps": {
+        "rs12913832": {"ancestral": "G", "note": "Blue eyes - nearly fixed in WHG"},
+        "rs1426654": {"ancestral": "G", "note": "Dark skin - ancestral allele retained"},
+        "rs16891982": {"ancestral": "C/G", "note": "Skin pigmentation - variable"},
+        "rs4988235": {"ancestral": "G", "note": "Lactose intolerance - universal"}
+      },
+      "famous_individuals": ["Cheddar Man", "Loschbour", "La Braña 1"],
+      "famous_sites": ["Gough's Cave (UK)", "Loschbour (Luxembourg)", "La Braña (Spain)"],
+      "modern_legacy": "Contributed ~10-20% of ancestry to modern Northern Europeans, less in South. Blue eye gene originated here.",
+      "pmids": ["25230663", "24463515", "29743352"]
+    },
+    
+    "ehg": {
+      "id": "ehg",
+      "name": "Eastern Hunter-Gatherers",
+      "abbreviation": "EHG",
+      "period": "~10,000-5,000 BCE",
+      "period_start": -10000,
+      "period_end": -5000,
+      "regions": ["Eastern Europe", "Western Russia", "Baltic region"],
+      "map_color": "#A23B72",
+      "description": "Hunter-gatherers of Eastern Europe and the Russian steppe. Mix of ancient West Eurasian and Ancient North Eurasian (ANE) ancestry. Later merged with Caucasus farmers to form the Yamnaya.",
+      "lifestyle": "Hunter-gatherer, some early animal management",
+      "subsistence": ["Hunting (horses, aurochs, deer)", "Fishing", "Gathering"],
+      "technology": "Advanced stone tools, bone/antler work",
+      "genetic_profile": {
+        "ancestry_components": {
+          "ehg": "~100%",
+          "note": "EHG itself is ~75% West Eurasian, ~25% ANE"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["R1a", "R1b", "J"],
+          "mt_dna": ["U4", "U5", "C1"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Intermediate to light",
+        "eyes": "Mixed",
+        "hair": "Dark",
+        "lactose_tolerance": "Absent"
+      },
+      "diagnostic_snps": {
+        "rs12913832": {"ancestral": "G/A", "note": "Mixed eye color"},
+        "rs1426654": {"ancestral": "G/A", "note": "Variable skin - some light skin allele"},
+        "rs4988235": {"ancestral": "G", "note": "Lactose intolerance"}
+      },
+      "famous_individuals": ["Karelia HG", "Samara HG"],
+      "famous_sites": ["Yuzhnyy Oleni Ostrov (Karelia)", "Lebyazhinka (Samara)"],
+      "modern_legacy": "Major contribution to Yamnaya and through them to modern Europeans. ~20-40% of European ancestry traces through EHG-derived populations.",
+      "pmids": ["25731166", "25230663"]
+    },
+    
+    "anf": {
+      "id": "anf",
+      "name": "Anatolian Neolithic Farmers",
+      "abbreviation": "ANF/EEF",
+      "period": "~8,000-4,000 BCE",
+      "period_start": -8000,
+      "period_end": -4000,
+      "regions": ["Anatolia", "Southeast Europe", "Central Europe", "Western Europe", "British Isles", "Mediterranean"],
+      "map_color": "#F18F01",
+      "description": "The first farmers, originating in the Fertile Crescent and spreading across Europe via two routes: along the Mediterranean coast and up the Danube. Replaced ~90% of WHG ancestry in most of Europe within 2,000 years.",
+      "lifestyle": "Sedentary farming",
+      "subsistence": ["Wheat and barley cultivation", "Cattle, sheep, goat herding", "Some hunting"],
+      "technology": "Pottery, polished stone tools, mud-brick architecture, weaving",
+      "genetic_profile": {
+        "ancestry_components": {
+          "anf": "~100%"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["G2a", "J2", "H2", "I2a1"],
+          "mt_dna": ["K", "N1a", "T2", "H", "J"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light/Mediterranean",
+        "eyes": "Brown",
+        "hair": "Dark",
+        "lactose_tolerance": "Absent (surprisingly)",
+        "height": "Short to medium"
+      },
+      "diagnostic_snps": {
+        "rs12913832": {"ancestral": "A", "note": "Brown eyes - dominant"},
+        "rs1426654": {"ancestral": "A", "note": "Light skin - already fixed"},
+        "rs16891982": {"ancestral": "C", "note": "Darker variant common"},
+        "rs4988235": {"ancestral": "G", "note": "STILL lactose intolerant despite cattle herding"}
+      },
+      "famous_individuals": ["Stuttgart LBK", "Ötzi the Iceman", "Barcın Neolithic"],
+      "famous_sites": ["Çatalhöyük (Turkey)", "Barcın (Turkey)", "Stuttgart (Germany)"],
+      "modern_legacy": "~20-40% of modern European ancestry. Brought light skin to Europe. Y-haplogroup G2a was dominant before Steppe migrations but now rare.",
+      "pmids": ["25230663", "26595274", "22337711"]
+    },
+    
+    "yamnaya": {
+      "id": "yamnaya",
+      "name": "Yamnaya (Steppe Pastoralists)",
+      "abbreviation": "Yamnaya",
+      "period": "3,300-2,600 BCE",
+      "period_start": -3300,
+      "period_end": -2600,
+      "regions": ["Pontic-Caspian Steppe", "later: all of Europe"],
+      "map_color": "#C73E1D",
+      "description": "Bronze Age pastoralists from the Pontic-Caspian steppe. One of the most impactful populations in human history. Spread Indo-European languages, brought new technologies, and massively transformed European genetics in the Bronze Age.",
+      "lifestyle": "Semi-nomadic pastoralism",
+      "subsistence": ["Cattle and sheep herding", "Horse domestication", "Limited farming"],
+      "technology": "Wheeled vehicles, bronze metallurgy, horse riding/driving",
+      "genetic_profile": {
+        "ancestry_components": {
+          "ehg": "~50%",
+          "chg_iran": "~50%",
+          "note": "Mix of Eastern HG and Caucasus/Iranian farmers"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["R1b1a1a2 (M269)", "R1a1a", "I2a2"],
+          "mt_dna": ["H2a", "U5", "T2", "W"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light to intermediate",
+        "eyes": "Mixed (brown/blue)",
+        "hair": "Dark brown",
+        "lactose_tolerance": "Low but beginning to increase",
+        "height": "Tall"
+      },
+      "diagnostic_snps": {
+        "rs12913832": {"ancestral": "G/A", "note": "Mixed eye color"},
+        "rs1426654": {"ancestral": "A", "note": "Light skin"},
+        "rs16891982": {"ancestral": "G", "note": "Light skin variant common"},
+        "rs4988235": {"ancestral": "G", "note": "Mostly lactose intolerant - surprising for herders"}
+      },
+      "famous_individuals": ["Yamnaya (Samara)", "Yamnaya (Kalmykia)"],
+      "famous_sites": ["Samara region", "Kalmykia", "Ukraine steppes"],
+      "modern_legacy": "~40-60% of Northern European ancestry, ~20-40% in Southern Europe. Brought R1b/R1a to dominance. Indo-European languages now spoken by 3 billion people.",
+      "pmids": ["25731166", "26062507", "27459054"]
+    },
+    
+    "bell_beaker": {
+      "id": "bell_beaker",
+      "name": "Bell Beaker Culture",
+      "abbreviation": "BB",
+      "period": "2,800-1,800 BCE",
+      "period_start": -2800,
+      "period_end": -1800,
+      "regions": ["Britain", "Iberia", "Central Europe", "Netherlands", "France", "Italy"],
+      "map_color": "#7D5BA6",
+      "description": "Bronze Age culture defined by distinctive bell-shaped pottery. The Bell Beaker expansion into Britain was one of the most dramatic population replacements in prehistory - replacing ~90% of Neolithic British ancestry within a few centuries.",
+      "lifestyle": "Mixed farming and herding, metalworking",
+      "subsistence": ["Cattle and sheep herding", "Barley cultivation", "Hunting"],
+      "technology": "Bronze metalworking, archery, distinctive pottery, early wool textiles",
+      "genetic_profile": {
+        "ancestry_components": {
+          "steppe": "~45-55%",
+          "neolithic_farmer": "~35-45%",
+          "whg": "~5-15%"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["R1b1a1a2a1a2 (P312)", "I2a"],
+          "mt_dna": ["H", "K", "U5", "T2"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light",
+        "eyes": "Mixed (brown/blue/hazel)",
+        "hair": "Variable",
+        "lactose_tolerance": "~30% (increasing)",
+        "height": "Medium to tall"
+      },
+      "diagnostic_snps": {
+        "rs12913832": {"ancestral": "G/A", "note": "Mixed eye colors"},
+        "rs1426654": {"ancestral": "A", "note": "Light skin - fixed"},
+        "rs16891982": {"ancestral": "G", "note": "Light skin variant common"},
+        "rs4988235": {"ancestral": "G/A", "note": "~30% carry lactase persistence"}
+      },
+      "famous_individuals": ["Amesbury Archer", "Boscombe Bowmen"],
+      "famous_sites": ["Amesbury (UK)", "Boscombe Down (UK)", "La Bastida (Spain)", "Csepel (Hungary)"],
+      "modern_legacy": "Direct ancestors of modern British/Irish. R1b-P312 dominates Western European Y-chromosomes today because of this expansion.",
+      "pmids": ["29466337", "30158200", "25731166"]
+    },
+    
+    "corded_ware": {
+      "id": "corded_ware",
+      "name": "Corded Ware Culture",
+      "abbreviation": "CW",
+      "period": "2,900-2,300 BCE",
+      "period_start": -2900,
+      "period_end": -2300,
+      "regions": ["Northern Europe", "Central Europe", "Baltic", "Scandinavia"],
+      "map_color": "#5C8001",
+      "description": "Contemporary with early Bell Beaker but primarily northern European distribution. Named for cord-impressed pottery decoration. Associated with the spread of R1a and possibly early Germanic/Baltic/Slavic Indo-European branches.",
+      "lifestyle": "Mixed pastoralism and farming",
+      "subsistence": ["Pig herding", "Cattle keeping", "Grain cultivation"],
+      "technology": "Stone battle axes, cord-decorated pottery, early bronze",
+      "genetic_profile": {
+        "ancestry_components": {
+          "steppe": "~70%",
+          "neolithic_farmer": "~25%",
+          "whg": "~5%"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["R1a1a1 (M417)", "I2a"],
+          "mt_dna": ["H", "U4", "U5", "T"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light",
+        "eyes": "Mixed",
+        "hair": "Variable (brown common)",
+        "lactose_tolerance": "Low (~10%)",
+        "height": "Tall"
+      },
+      "diagnostic_snps": {
+        "rs12913832": {"ancestral": "G/A", "note": "Mixed"},
+        "rs1426654": {"ancestral": "A", "note": "Light skin fixed"},
+        "rs4988235": {"ancestral": "G", "note": "Low lactase persistence"}
+      },
+      "famous_individuals": ["Esperstedt CW"],
+      "famous_sites": ["Esperstedt (Germany)", "Eulau (Germany)", "various Baltic sites"],
+      "modern_legacy": "Contributed significantly to Northern/Eastern European ancestry. R1a spread with Corded Ware, now dominant in Eastern Europe, Central Asia, South Asia.",
+      "pmids": ["25731166", "26062507"]
+    },
+    
+    "unetice": {
+      "id": "unetice",
+      "name": "Únětice Culture",
+      "abbreviation": "Únětice",
+      "period": "2,300-1,600 BCE",
+      "period_start": -2300,
+      "period_end": -1600,
+      "regions": ["Central Europe (Bohemia, Moravia, Germany, Poland, Austria)"],
+      "map_color": "#C77DFF",
+      "description": "Early Bronze Age culture of Central Europe. Famous for sophisticated bronze metallurgy and the Nebra Sky Disc, the oldest known realistic representation of the cosmos.",
+      "lifestyle": "Settled farming, long-distance trade",
+      "subsistence": ["Agriculture", "Animal husbandry", "Trade"],
+      "technology": "Advanced bronze working, gold working, amber trade",
+      "genetic_profile": {
+        "ancestry_components": {
+          "steppe": "~50%",
+          "neolithic_farmer": "~40%",
+          "whg": "~10%"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["R1a", "R1b", "I2"],
+          "mt_dna": ["H", "J", "K", "U5"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light",
+        "eyes": "Mixed",
+        "hair": "Variable",
+        "lactose_tolerance": "~25%"
+      },
+      "famous_individuals": ["Nebra Sky Disc hoard princes"],
+      "famous_sites": ["Nebra (Germany)", "Únětice (Czech Republic)", "Leubingen (Germany)"],
+      "modern_legacy": "Ancestors of later Central European Bronze/Iron Age populations.",
+      "pmids": ["30679240", "31879163"]
+    },
+    
+    "british_bronze_age": {
+      "id": "british_bronze_age",
+      "name": "British Bronze Age",
+      "abbreviation": "BBA",
+      "period": "2,400-800 BCE",
+      "period_start": -2400,
+      "period_end": -800,
+      "regions": ["Britain", "Ireland"],
+      "map_color": "#CD7F32",
+      "description": "Bronze Age population of Britain and Ireland, descended from Bell Beaker migrants. Built the final phases of Stonehenge, developed sophisticated bronze metalworking, and established trade networks across Europe.",
+      "lifestyle": "Mixed farming, metalworking, monument building",
+      "subsistence": ["Cattle/sheep farming", "Grain cultivation", "Bronze production"],
+      "technology": "Bronze tools and weapons, gold ornaments, tin mining and trade",
+      "genetic_profile": {
+        "ancestry_components": {
+          "steppe": "~50%",
+          "neolithic_farmer": "~35%",
+          "whg": "~15%"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["R1b1a1a2a1a2 (P312, L21)"],
+          "mt_dna": ["H", "K", "U5", "J", "T"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light",
+        "eyes": "Mixed (blue increasing)",
+        "hair": "Variable",
+        "lactose_tolerance": "~40-50%",
+        "height": "Medium"
+      },
+      "famous_individuals": ["Bush Barrow man"],
+      "famous_sites": ["Stonehenge Phase 3", "Bush Barrow", "Flag Fen"],
+      "modern_legacy": "Direct ancestors of Iron Age Britons and ultimately modern British people.",
+      "pmids": ["36545618", "29466337"]
+    },
+    
+    "hallstatt_culture": {
+      "id": "hallstatt_culture",
+      "name": "Hallstatt Culture (Early Celtic)",
+      "abbreviation": "Hallstatt",
+      "period": "800-450 BCE",
+      "period_start": -800,
+      "period_end": -450,
+      "regions": ["Central Europe (Austria, Germany, Switzerland, France)"],
+      "map_color": "#4A7C59",
+      "description": "Early Iron Age culture of Central Europe, often considered the first identifiable 'Celtic' culture. Named for the salt mines at Hallstatt, Austria. Elite burials with wagons, imports from Mediterranean.",
+      "lifestyle": "Settled farming, salt mining, long-distance trade",
+      "subsistence": ["Agriculture", "Salt production", "Animal husbandry", "Trade"],
+      "technology": "Iron working, salt mining, wagon burials, Mediterranean imports",
+      "genetic_profile": {
+        "ancestry_components": {
+          "steppe": "~45%",
+          "neolithic_farmer": "~40%",
+          "whg": "~15%"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["R1b (P312, U152)", "I"],
+          "mt_dna": ["H", "U", "K", "J"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light",
+        "eyes": "Mixed",
+        "hair": "Variable (red noted in classical sources)",
+        "lactose_tolerance": "~50%"
+      },
+      "famous_individuals": ["Hochdorf Prince"],
+      "famous_sites": ["Hallstatt (Austria)", "Hochdorf (Germany)", "Vix (France)"],
+      "modern_legacy": "Foundation population for La Tène Celts who spread across Europe.",
+      "pmids": ["36191212", "33087900"]
+    },
+    
+    "la_tene_culture": {
+      "id": "la_tene_culture",
+      "name": "La Tène Culture (Late Celtic)",
+      "abbreviation": "La Tène",
+      "period": "450 BCE - 1 CE",
+      "period_start": -450,
+      "period_end": 1,
+      "regions": ["Central Europe", "France (Gaul)", "Britain", "Iberia", "Balkans", "Anatolia (Galatia)"],
+      "map_color": "#6A994E",
+      "description": "Height of Celtic civilization. Named for the La Tène archaeological site in Switzerland. Distinctive art style, expanded across Europe. Gauls, Britons, Galatians, Celtiberians.",
+      "lifestyle": "Farming, warfare, trade, oppida (proto-urban settlements)",
+      "subsistence": ["Agriculture", "Cattle raising", "Trade", "Metalworking"],
+      "technology": "Advanced iron smithing, chainmail, distinctive art, oppida",
+      "genetic_profile": {
+        "ancestry_components": {
+          "steppe": "~45%",
+          "neolithic_farmer": "~40%",
+          "whg": "~15%"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["R1b (P312, L21, U152)", "I", "R1a"],
+          "mt_dna": ["H", "U", "K", "J", "T"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light",
+        "eyes": "Mixed",
+        "hair": "Variable (Celts described as tall, often red/blond haired by Romans)",
+        "lactose_tolerance": "~60%"
+      },
+      "famous_individuals": ["Lindow Man (possibly)", "Gallic chieftains"],
+      "famous_sites": ["La Tène (Switzerland)", "Manching (Germany)", "Maiden Castle (UK)"],
+      "modern_legacy": "Immediate ancestors of Roman-period Celtic peoples. Celtic languages survive in Ireland, Wales, Scotland, Brittany.",
+      "pmids": ["36191212", "33087900"]
+    },
+    
+    "british_iron_age": {
+      "id": "british_iron_age",
+      "name": "British Iron Age",
+      "abbreviation": "BIA",
+      "period": "800 BCE - 43 CE",
+      "period_start": -800,
+      "period_end": 43,
+      "regions": ["Britain", "Ireland"],
+      "map_color": "#386641",
+      "description": "Iron Age inhabitants of Britain before Roman conquest. Built hill forts, had druids, used Celtic languages. Largely continuous with Bronze Age population with some Continental Celtic influence.",
+      "lifestyle": "Hill fort settlements, farming, warfare",
+      "subsistence": ["Mixed farming", "Cattle raising", "Grain cultivation"],
+      "technology": "Iron working, chariot warfare, roundhouse architecture",
+      "genetic_profile": {
+        "ancestry_components": {
+          "steppe": "~50%",
+          "neolithic_farmer": "~35%",
+          "whg": "~15%"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["R1b (L21 dominant)", "I2"],
+          "mt_dna": ["H", "U", "K", "J", "T"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light",
+        "eyes": "Mixed (blue/green common)",
+        "hair": "Variable (red/auburn noted)",
+        "lactose_tolerance": "~60-70%"
+      },
+      "famous_individuals": ["Lindow Man", "Wetwang Woman"],
+      "famous_sites": ["Maiden Castle", "Danebury", "Glastonbury Lake Village"],
+      "modern_legacy": "Major contributors to modern British ancestry. R1b-L21 dominates Ireland and Western Britain today.",
+      "pmids": ["36545618", "33087900"]
+    },
+    
+    "anglo_saxon": {
+      "id": "anglo_saxon",
+      "name": "Anglo-Saxons",
+      "abbreviation": "AS",
+      "period": "400-1066 CE",
+      "period_start": 400,
+      "period_end": 1066,
+      "regions": ["England", "origin: Northern Germany, Denmark, Netherlands"],
+      "map_color": "#9B2335",
+      "description": "Germanic migrants who settled in Britain after Roman withdrawal. Angles, Saxons, Jutes, and Frisians. Established the foundations of England, English language, and English culture.",
+      "lifestyle": "Farming, trading, early medieval kingdoms",
+      "subsistence": ["Agriculture", "Animal husbandry", "Trade"],
+      "technology": "Sophisticated metalwork, ship-building, manuscript illumination",
+      "genetic_profile": {
+        "ancestry_components": {
+          "continental_germanic": "~35-40% of English ancestry",
+          "note": "Mixed with indigenous British, highly regional variation"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["I1", "R1b", "R1a"],
+          "mt_dna": ["H", "U", "K", "J"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light",
+        "eyes": "Blue (common)",
+        "hair": "Fair/Brown",
+        "lactose_tolerance": "~70-80%"
+      },
+      "famous_individuals": ["Sutton Hoo king", "Oakington Anglo-Saxons"],
+      "famous_sites": ["Sutton Hoo", "West Stow", "Oakington"],
+      "modern_legacy": "~25-40% of English ancestry is Anglo-Saxon (varies by region - higher in East, lower in West/North). English language and culture.",
+      "pmids": ["26812060", "36131024"]
+    },
+    
+    "viking": {
+      "id": "viking",
+      "name": "Vikings (Norse)",
+      "abbreviation": "Viking",
+      "period": "793-1066 CE",
+      "period_start": 793,
+      "period_end": 1066,
+      "regions": ["Scandinavia", "Britain (Danelaw)", "Ireland", "Iceland", "Normandy", "Russia (Rus')"],
+      "map_color": "#3F84E5",
+      "description": "Scandinavian seafarers who raided, traded, and settled across Europe and beyond. Established the Danelaw in England, founded Dublin, colonized Iceland and Greenland, reached North America.",
+      "lifestyle": "Seafaring, raiding, trading, farming, settlement",
+      "subsistence": ["Farming", "Fishing", "Trade", "Raiding"],
+      "technology": "Advanced ship-building, navigation, metalworking",
+      "genetic_profile": {
+        "ancestry_components": {
+          "scandinavian": "Variable by origin",
+          "note": "Danish Vikings more diverse; Norwegian Vikings more homogeneous"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["I1", "R1b", "R1a"],
+          "mt_dna": ["H", "U", "K", "J", "I"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light",
+        "eyes": "Blue (common)",
+        "hair": "Brown/Fair",
+        "lactose_tolerance": "~80%"
+      },
+      "famous_individuals": ["Gokstad ship burial", "Birka warrior woman", "Repton warriors"],
+      "famous_sites": ["Oseberg", "Gokstad", "Birka", "L'Anse aux Meadows"],
+      "modern_legacy": "~3-6% of English ancestry, higher in northern/eastern regions. Significant contribution to Scottish, Irish ancestry. Founded Iceland's population.",
+      "pmids": ["32939066", "36131024", "28884802"]
+    },
+    
+    "pictish": {
+      "id": "pictish",
+      "name": "Picts",
+      "abbreviation": "Pict",
+      "period": "300-843 CE",
+      "period_start": 300,
+      "period_end": 843,
+      "regions": ["Scotland (north and east)"],
+      "map_color": "#6247AA",
+      "description": "Indigenous people of northern and eastern Scotland. Known for distinctive carved symbol stones. United with Scots to form Kingdom of Alba/Scotland in 843 CE. Their language is lost.",
+      "lifestyle": "Farming, fishing, monument carving",
+      "subsistence": ["Agriculture", "Cattle raising", "Fishing"],
+      "technology": "Distinctive symbol stones, metalwork",
+      "genetic_profile": {
+        "ancestry_components": {
+          "british_iron_age": "~85%",
+          "germanic": "~5-10%",
+          "note": "Largely continuous with Iron Age Britons"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["R1b (L21)", "I2"],
+          "mt_dna": ["H", "U", "K"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light",
+        "eyes": "Mixed",
+        "hair": "Variable",
+        "lactose_tolerance": "~60%"
+      },
+      "famous_individuals": ["Lundin Links burials"],
+      "famous_sites": ["Forteviot", "Burghead", "Dunnicaer"],
+      "modern_legacy": "Absorbed into Scottish population. Contributed to modern Scottish ancestry, especially in northeast Scotland.",
+      "pmids": ["36131024"]
+    },
+    
+    "roman_britain": {
+      "id": "roman_britain",
+      "name": "Roman Britain",
+      "abbreviation": "RB",
+      "period": "43-410 CE",
+      "period_start": 43,
+      "period_end": 410,
+      "regions": ["Britain (south of Hadrian's Wall)"],
+      "map_color": "#DC143C",
+      "description": "Britain under Roman rule. Mix of native Britons, Roman settlers from across the Empire, and their descendants. Diverse population in urban centers like London and York.",
+      "lifestyle": "Urban and rural, military, trade",
+      "subsistence": ["Agriculture", "Trade", "Military service"],
+      "technology": "Roads, aqueducts, central heating, writing",
+      "genetic_profile": {
+        "ancestry_components": {
+          "british_iron_age": "~85-95%",
+          "mediterranean": "~5-10%",
+          "african": "Present in some individuals",
+          "note": "Urban centers more diverse than rural areas"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["R1b", "I", "J", "E"],
+          "mt_dna": ["H", "U", "K", "J", "T", "L (in diverse individuals)"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Variable (diverse Empire)",
+        "eyes": "Mixed",
+        "hair": "Variable",
+        "lactose_tolerance": "~60%"
+      },
+      "famous_individuals": ["York gladiators", "Beachy Head woman (African ancestry)"],
+      "famous_sites": ["London", "York (Eboracum)", "Bath"],
+      "modern_legacy": "Little direct genetic impact - most genetic change came from later Anglo-Saxon and Viking migrations.",
+      "pmids": ["26763968"]
+    },
+    
+    "iran_neolithic": {
+      "id": "iran_neolithic",
+      "name": "Iranian Neolithic",
+      "abbreviation": "Iran_N",
+      "period": "10,000-5,000 BCE",
+      "period_start": -10000,
+      "period_end": -5000,
+      "regions": ["Zagros Mountains (Iran/Iraq)", "later: Caucasus, Central Asia"],
+      "map_color": "#F4A261",
+      "description": "Independent development of farming in the Zagros mountains. Ancestral to Caucasus populations and contributed significantly to Yamnaya ancestry, and through them to modern Europeans.",
+      "lifestyle": "Early farming and herding",
+      "subsistence": ["Goat/sheep herding", "Early agriculture"],
+      "technology": "Early pottery, animal domestication",
+      "genetic_profile": {
+        "ancestry_components": {
+          "iran_neolithic": "~100%"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["J", "G"],
+          "mt_dna": ["X", "U", "J"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light/Mediterranean",
+        "eyes": "Brown",
+        "hair": "Dark",
+        "lactose_tolerance": "Absent"
+      },
+      "famous_sites": ["Ganj Dareh", "Tepe Abdul Hosein"],
+      "modern_legacy": "~25% of Yamnaya ancestry came from Iran/Caucasus-related populations. Major contribution to South/Central Asian ancestry.",
+      "pmids": ["27459054"]
+    },
+    
+    "levant_neolithic": {
+      "id": "levant_neolithic",
+      "name": "Levantine Neolithic",
+      "abbreviation": "Levant_N",
+      "period": "10,000-6,000 BCE",
+      "period_start": -10000,
+      "period_end": -6000,
+      "regions": ["Levant (Israel, Jordan, Lebanon, Syria)", "Turkey"],
+      "map_color": "#E9C46A",
+      "description": "The cradle of agriculture. First domestication of wheat, barley, and many animals. Pre-Pottery Neolithic cultures built some of the world's oldest settlements including Jericho.",
+      "lifestyle": "Early farming",
+      "subsistence": ["Wheat and barley cultivation", "Goat/sheep herding"],
+      "technology": "Ground stone tools, early architecture, plastered skulls",
+      "genetic_profile": {
+        "ancestry_components": {
+          "levant_neolithic": "~100%"
+        },
+        "typical_haplogroups": {
+          "y_dna": ["E", "J", "T", "G"],
+          "mt_dna": ["K", "T", "N1"]
+        }
+      },
+      "typical_phenotype": {
+        "skin": "Light/Mediterranean",
+        "eyes": "Brown",
+        "hair": "Dark",
+        "lactose_tolerance": "Absent"
+      },
+      "famous_sites": ["Jericho", "Ain Ghazal", "Çatalhöyük"],
+      "modern_legacy": "Ancestral to all European farmers via Anatolia. Foundation of Western civilization's agricultural base.",
+      "pmids": ["27459054"]
+    }
+  }
+}

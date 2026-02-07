@@ -137,7 +137,7 @@ class PRSResult(TypedDict, total=False):
 # CONSTANTS
 # =============================================================================
 
-VERSION = "4.3.0"
+VERSION = "4.4.0"
 OUTPUT_DIR = Path.home() / "dna-analysis" / "reports"
 
 # Valid rsID pattern
@@ -170,6 +170,8 @@ try:
     from markers.fertility import FERTILITY_MARKERS
     from markers.haplogroups import analyze_haplogroups
     from markers.ancestry_composition import get_ancestry_summary
+    from markers.population_comparison import get_population_comparison_json
+    from markers.ancient_ancestry import get_ancient_dna_json, get_neanderthal_report
     from markers import get_marker_counts
     MODULES_LOADED = True
 except ImportError as e:
@@ -903,6 +905,27 @@ def generate_agent_summary(all_results: Dict[str, Any]) -> Dict[str, Any]:
             "educational_note": ancestry_data.get("educational_note", ""),
             "summary": ancestry_data.get("summary", "")
         }
+    
+    # Add population comparison (1000 Genomes)
+    pop_comparison = all_results.get("population_comparison", {})
+    if pop_comparison:
+        summary["population_comparison"] = {
+            "most_similar_populations": pop_comparison.get("most_similar_populations", []),
+            "superpopulation_summary": pop_comparison.get("superpopulation_summary", {}),
+            "marker_details": pop_comparison.get("marker_details", []),
+            "total_markers": pop_comparison.get("total_markers", 0),
+            "methodology": pop_comparison.get("methodology", {})
+        }
+    
+    # Add ancient DNA data
+    ancient_dna = all_results.get("ancient_dna", {})
+    if ancient_dna:
+        summary["ancient_dna"] = ancient_dna
+    
+    # Add Neanderthal analysis
+    neanderthal = all_results.get("neanderthal", {})
+    if neanderthal:
+        summary["neanderthal"] = neanderthal
 
     return summary
 
@@ -1370,6 +1393,11 @@ def analyze_dna_file(
         # Ancestry & Haplogroups (with proper disclaimers)
         all_results["haplogroups"] = analyze_haplogroups(genotypes)
         all_results["ancestry"] = get_ancestry_summary(genotypes)
+        
+        # Population Comparison (1000 Genomes) & Ancient DNA
+        all_results["population_comparison"] = get_population_comparison_json(genotypes)
+        all_results["ancient_dna"] = get_ancient_dna_json(genotypes)
+        all_results["neanderthal"] = get_neanderthal_report(genotypes)
 
         # Advanced features
         all_results["lifestyle_recommendations"] = generate_lifestyle_recommendations(all_results)

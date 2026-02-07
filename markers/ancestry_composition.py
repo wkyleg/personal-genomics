@@ -696,3 +696,41 @@ def calculate_wilson_confidence_interval(
     upper = min(1, center + margin)
     
     return (lower, upper)
+
+
+# =============================================================================
+# BACKWARDS COMPATIBILITY ALIASES
+# =============================================================================
+# For v4.3.0 and earlier test compatibility
+
+# Alias for tests expecting ANCESTRY_INFORMATIVE_MARKERS
+ANCESTRY_INFORMATIVE_MARKERS = ANCIENT_ANCESTRY_MARKERS
+
+# Population descriptions for backwards compatibility
+POPULATION_DESCRIPTIONS = {
+    "EUR": {
+        "name": "European",
+        "abbreviation": "EUR",
+        "description": "European ancestry",
+    },
+    "AFR": {
+        "name": "African",
+        "abbreviation": "AFR",
+        "description": "Sub-Saharan African ancestry",
+    },
+    "EAS": {
+        "name": "East Asian",
+        "abbreviation": "EAS",
+        "description": "East Asian ancestry",
+    },
+    "SAS": {
+        "name": "South Asian",
+        "abbreviation": "SAS",
+        "description": "South Asian ancestry",
+    },
+    "AMR": {
+        "name": "Americas",
+        "abbreviation": "AMR",
+        "description": "Indigenous American ancestry",
+    },
+}

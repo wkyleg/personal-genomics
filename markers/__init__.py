@@ -78,9 +78,21 @@ from .haplogroups import (
 )
 from .ancestry_composition import (
     ANCIENT_POPULATIONS, ANCIENT_ANCESTRY_MARKERS,
+    ANCESTRY_INFORMATIVE_MARKERS, POPULATION_DESCRIPTIONS,  # For backwards compat
     detect_ancient_signals, get_ancestry_summary,
     estimate_ancestry, detect_admixture,  # Legacy compatibility
     calculate_wilson_confidence_interval
+)
+
+# NEW v4.4.0 population comparison and ancient DNA
+from .population_comparison import (
+    get_population_comparison_json, compare_to_populations,
+    find_most_similar_populations, get_marker_population_context,
+    generate_population_comparison_report
+)
+from .ancient_ancestry import (
+    get_ancient_dna_json, detect_ancient_signals as detect_ancient_signals_v44,
+    generate_ancient_dna_report, get_neanderthal_report
 )
 from .cancer_panel import (
     BRCA1_MARKERS, BRCA2_MARKERS, LYNCH_SYNDROME_MARKERS, OTHER_CANCER_MARKERS,

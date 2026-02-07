@@ -1,6 +1,12 @@
-# Personal Genomics Skill v4.3.0
+# Personal Genomics Skill v4.4.0
 
 Comprehensive local DNA analysis with **1600+ markers** across **30 categories**. Privacy-first genetic analysis for AI agents.
+
+**🆕 v4.4.0: 1000 GENOMES POPULATION COMPARISON & ANCIENT DNA**
+- Transparent population comparison (not black-box percentages)
+- Ancient DNA signal detection (WHG, ANF, Yamnaya, Neanderthal)
+- Interactive dashboard with population frequency visualizations
+- Complete methodology documentation
 
 **⚠️ v4.3.0 focuses on ACCURACY AND HONESTY** - improved uncertainty handling, PMIDs for all claims, and explicit limitations.
 
