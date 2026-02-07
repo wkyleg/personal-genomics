@@ -20,6 +20,14 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 
+# Try to import from markers module, fall back to inline definitions
+try:
+    from markers.health_markers import HEALTH_MARKERS as IMPORTED_HEALTH_MARKERS
+    from markers.trait_markers import TRAIT_MARKERS as IMPORTED_TRAIT_MARKERS
+    USE_MARKER_MODULE = True
+except ImportError:
+    USE_MARKER_MODULE = False
+
 OUTPUT_DIR = Path.home() / "dna-analysis" / "reports"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
