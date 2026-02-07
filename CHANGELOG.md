@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Ancient Individual Matching (YourTrueAncestry Clone)
+- New `references/ancient_individuals.json` - 30+ ancient genomes from published studies
+- New `references/ancient_cultures.json` - 15+ archaeological cultures for affinity matching
+- New `markers/ancient_matching.py` module with:
+  - `calculate_genetic_distance()` - IBS-based similarity calculation
+  - `find_closest_ancients()` - Rank ancient individuals by similarity
+  - `match_to_cultures()` - Calculate cultural affinities
+  - `generate_ancient_matches_report()` - Detailed text report
+  - `get_ancient_matches_json()` - Structured JSON for dashboard
+- **Coverage includes:**
+  - Mesolithic: Cheddar Man, Loschbour, La Braña
+  - Neolithic: Barcın Farmer, Stuttgart LBK, British Neolithic
+  - Bronze Age: Ötzi, Yamnaya, Bell Beaker, Corded Ware
+  - Iron Age: Hallstatt Celtic, British Iron Age
+  - Historical: Roman Britain, Anglo-Saxons, Vikings, Medieval
+- **Better than paid services:**
+  - ✅ Full transparency - methodology completely open
+  - ✅ PMIDs for every sample - verify the science
+  - ✅ Downloadable raw data - export anytime
+  - ✅ Free forever - no paywall
+  - ✅ Open source - fully auditable code
+
 #### 1000 Genomes Population Comparison
 - New `references/1000genomes_frequencies.json` - Population frequency data for 20+ markers from 1000 Genomes Phase 3
 - New `markers/population_comparison.py` module with:

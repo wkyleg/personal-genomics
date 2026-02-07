@@ -3109,7 +3109,8 @@
         // ========================================
         function renderAncientMatches() {
             const ancientMatches = data.ancient_matches || {};
-            const matches = ancientMatches.matches || [];
+            // Support both old and new data formats
+            const matches = ancientMatches.top_matches || ancientMatches.matches || [];
             const cultureAffinities = ancientMatches.culture_affinities || [];
             const timeline = ancientMatches.timeline || [];
             
@@ -3135,56 +3136,61 @@
                 return;
             }
             
-            const periodClass = {
-                'Mesolithic': 'mesolithic',
-                'Neolithic': 'neolithic',
-                'Chalcolithic': 'bronze-age',
-                'Bronze Age': 'bronze-age',
-                'Iron Age': 'iron-age',
-                'Roman': 'roman',
-                'Early Medieval': 'medieval'
+            const cultureColors = {
+                'WHG': '#3b82f6', 'EHG': '#06b6d4', 'ANF': '#10b981', 'EEF': '#22c55e',
+                'LBK': '#84cc16', 'Yamnaya': '#f59e0b', 'Corded_Ware': '#eab308',
+                'Bell_Beaker': '#f97316', 'Celtic_IA': '#14b8a6', 'Roman': '#dc2626',
+                'Anglo_Saxon': '#8b5cf6', 'Viking': '#6366f1', 'Medieval': '#a855f7'
             };
             
             let html = '';
             matches.forEach((match, i) => {
                 const rank = i + 1;
-                const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
-                const pClass = periodClass[match.period] || '';
+                const similarity = match.similarity_percent || match.similarity || 0;
+                const borderColor = cultureColors[match.culture] || 'var(--accent-primary)';
+                const age = match.age_calBCE || match.age_bp || 0;
+                const ageDisplay = age < 0 ? `${Math.abs(age)} CE` : `${age} BCE`;
+                
+                // Extract matched traits
+                const traitMatches = (match.trait_comparison || []).filter(t => t.match);
                 
                 html += `
-                    <div class="ancient-card ${pClass}">
-                        <div class="match-rank ${rankClass}">#${rank}</div>
-                        <h3>${escapeHtml(match.name)}</h3>
-                        
-                        <div class="match-distance">
-                            <span class="similarity-value">${match.similarity?.toFixed(1) || '?'}</span>
-                            <div class="distance-bar-container">
-                                <div class="distance-bar" style="width: ${match.similarity || 0}%"></div>
+                    <div class="ancient-match-card" style="border-left-color: ${borderColor};">
+                        <div class="ancient-match-rank">
+                            <div class="rank-number">#${rank}</div>
+                            <div class="ancient-match-similarity">
+                                <div class="percent" style="color: ${borderColor};">${similarity.toFixed(1)}%</div>
+                                <div class="label">similarity</div>
                             </div>
                         </div>
                         
-                        <div class="match-period">
-                            <span class="period-badge">${escapeHtml(match.period)}</span>
-                            ${escapeHtml(match.age_text || '')}
+                        <div class="ancient-match-name">${escapeHtml(match.name)}</div>
+                        <div class="ancient-match-meta">${escapeHtml(match.period || '')} · ${ageDisplay}</div>
+                        
+                        <div class="ancient-match-culture" style="color: ${borderColor};">
+                            ${escapeHtml(match.culture_name || match.culture || '')}
                         </div>
                         
-                        <div class="match-location">
-                            📍 ${escapeHtml(match.site || '')}, ${escapeHtml(match.country || '')}
+                        <div class="ancient-match-description">
+                            ${escapeHtml((match.description || '').substring(0, 120))}${(match.description || '').length > 120 ? '...' : ''}
                         </div>
                         
-                        <div class="match-description">
-                            ${escapeHtml((match.description || '').substring(0, 150))}${(match.description || '').length > 150 ? '...' : ''}
-                        </div>
-                        
-                        ${(match.shared_traits || []).length > 0 ? `
-                            <div class="shared-traits">
-                                ${match.shared_traits.slice(0, 3).map(t => `<span class="trait match">${escapeHtml(t)}</span>`).join('')}
+                        ${traitMatches.length > 0 ? `
+                            <div class="ancient-match-traits">
+                                ${traitMatches.slice(0, 3).map(t => `<span class="trait-tag match">✓ ${escapeHtml(t.trait)}</span>`).join('')}
                             </div>
                         ` : ''}
                         
-                        <div style="margin-top: 0.75rem; font-size: 0.7rem; color: var(--text-secondary);">
-                            ${match.shared_snps || 0} shared SNPs
-                            ${match.pmid ? ` · <a href="https://pubmed.ncbi.nlm.nih.gov/${match.pmid}/" target="_blank" rel="noopener" class="pmid-link">PMID:${match.pmid}</a>` : ''}
+                        ${(match.physical_traits || []).length > 0 ? `
+                            <div class="ancient-match-traits">
+                                ${match.physical_traits.slice(0, 3).map(t => `<span class="trait-tag">${escapeHtml(t)}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="ancient-match-footer">
+                            <span>📍 ${escapeHtml(match.site || 'Unknown')}</span>
+                            <span>${match.shared_snps || 0} SNPs</span>
+                            ${match.pmid ? `<a href="https://pubmed.ncbi.nlm.nih.gov/${match.pmid}/" target="_blank" rel="noopener" class="pmid-link">PMID</a>` : ''}
                         </div>
                     </div>
                 `;
@@ -3200,21 +3206,29 @@
                 return;
             }
             
+            const cultureColors = {
+                'WHG': '#3b82f6', 'EHG': '#06b6d4', 'ANF': '#10b981', 'EEF': '#22c55e',
+                'LBK': '#84cc16', 'Yamnaya': '#f59e0b', 'Corded_Ware': '#eab308',
+                'Bell_Beaker': '#f97316', 'Celtic_IA': '#14b8a6', 'Roman': '#dc2626',
+                'Anglo_Saxon': '#8b5cf6', 'Viking': '#6366f1', 'Medieval': '#a855f7',
+                'Steppe_early': '#ca8a04', 'Afanasievo': '#ea580c', 'Sintashta': '#b45309'
+            };
+            
             let html = '';
             affinities.forEach(aff => {
-                const color = aff.map_color || 'var(--accent-primary)';
+                const color = aff.color || cultureColors[aff.culture_id] || 'var(--accent-primary)';
+                const icon = aff.icon || '🏛️';
+                const affinity = aff.affinity_percent || aff.affinity || 0;
                 
                 html += `
-                    <div class="culture-bar-container">
-                        <div class="culture-bar-header">
-                            <div class="culture-name">
-                                ${escapeHtml(aff.name)}
-                                <span class="culture-period">${escapeHtml(aff.period || '')}</span>
-                            </div>
-                            <div class="culture-affinity-value">${aff.affinity?.toFixed(1) || 0}%</div>
+                    <div class="culture-affinity-row">
+                        <div class="culture-icon">${icon}</div>
+                        <div class="culture-info">
+                            <div class="culture-name">${escapeHtml(aff.name || aff.culture_id || '')}</div>
                         </div>
-                        <div class="culture-bar-track">
-                            <div class="culture-bar-fill" style="width: ${aff.affinity || 0}%; background: ${color};">
+                        <div class="culture-bar-container">
+                            <div class="culture-bar-fill" style="width: ${affinity}%; background: ${color};">
+                                <span>${affinity.toFixed(1)}%</span>
                             </div>
                         </div>
                     </div>
@@ -3227,45 +3241,34 @@
         function renderVisualTimeline(timeline) {
             const container = document.getElementById('visual-timeline');
             if (!container || timeline.length === 0) {
-                if (container) container.innerHTML = '';
+                if (container) container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 1rem;">Timeline will appear after analysis.</p>';
                 return;
             }
             
-            // Create visual timeline
-            const minYear = -10000;
-            const maxYear = 1100;
-            const range = maxYear - minYear;
+            // Sort timeline by year (oldest first)
+            const sorted = [...timeline].sort((a, b) => b.year - a.year);
             
-            let markersHtml = '';
-            timeline.slice(0, 10).forEach(item => {
-                const position = ((item.year - minYear) / range) * 100;
-                markersHtml += `
-                    <div class="timeline-marker" style="left: ${position}%;" title="${escapeHtml(item.name)}: ${escapeHtml(item.year_display)}">
-                        <div class="timeline-marker-dot"></div>
-                        <div class="timeline-marker-label">${escapeHtml(item.name.split(' ')[0])}</div>
+            let html = '<div class="timeline-axis"></div>';
+            
+            sorted.slice(0, 8).forEach((item, i) => {
+                const yearDisplay = item.year_display || (item.year < 0 ? `${Math.abs(item.year)} BCE` : `${item.year} CE`);
+                const similarity = item.similarity || 0;
+                
+                html += `
+                    <div class="timeline-entry">
+                        <div class="timeline-date">${yearDisplay}</div>
+                        <div class="timeline-content">
+                            <div>
+                                <div class="timeline-name">${escapeHtml(item.name || '')}</div>
+                                <div class="timeline-culture">${escapeHtml(item.culture || '')}</div>
+                            </div>
+                            <div class="timeline-similarity">${similarity.toFixed(1)}%</div>
+                        </div>
                     </div>
                 `;
             });
             
-            container.innerHTML = `
-                <div class="timeline-axis">
-                    <span>10000 BCE</span>
-                    <span>5000 BCE</span>
-                    <span>1 CE</span>
-                    <span>1000 CE</span>
-                </div>
-                <div class="timeline-track">
-                    ${markersHtml}
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 40px; padding: 0 1rem; font-size: 0.7rem; color: var(--text-secondary);">
-                    <span style="color: #2E86AB;">Mesolithic</span>
-                    <span style="color: #F18F01;">Neolithic</span>
-                    <span style="color: #CD7F32;">Bronze Age</span>
-                    <span style="color: #4A7C59;">Iron Age</span>
-                    <span style="color: #DC143C;">Roman</span>
-                    <span style="color: #6247AA;">Medieval</span>
-                </div>
-            `;
+            container.innerHTML = html;
         }
         
         function renderFamousAncients(matches) {
@@ -3276,7 +3279,7 @@
             const famous = [
                 { id: 'cheddar_man', icon: '💀', label: "Britain's oldest DNA" },
                 { id: 'otzi', icon: '🧊', label: "The Iceman" },
-                { id: 'amesbury_archer', icon: '🏹', label: "King of Stonehenge" },
+                { id: 'bell_beaker_britain', icon: '🔔', label: "Stonehenge builder" },
                 { id: 'viking_denmark', icon: '⚔️', label: "Viking warrior" },
                 { id: 'loschbour', icon: '🏕️', label: "Hunter-gatherer" },
                 { id: 'yamnaya_samara', icon: '🐴', label: "Steppe pastoralist" }
@@ -3286,17 +3289,16 @@
             famous.forEach(f => {
                 const match = matches.find(m => m.id === f.id);
                 if (match) {
+                    const similarity = match.similarity_percent || match.similarity || 0;
+                    const age = match.age_calBCE || 0;
+                    const ageDisplay = age < 0 ? `${Math.abs(age)} CE` : `${age} BCE`;
+                    
                     html += `
                         <div class="famous-ancient-card">
-                            <div class="famous-ancient-icon">${f.icon}</div>
-                            <div class="famous-ancient-info">
-                                <h4>${escapeHtml(match.name)}</h4>
-                                <p>${f.label}</p>
-                                <p>${escapeHtml(match.age_text || '')}</p>
-                                <div class="famous-ancient-similarity">${match.similarity?.toFixed(1) || '?'}% similar</div>
-                                ${(match.shared_traits || []).length > 0 ? 
-                                    `<p style="font-size: 0.75rem; margin-top: 0.25rem;">Shared: ${escapeHtml(match.shared_traits[0])}</p>` : ''}
-                            </div>
+                            <div class="famous-ancient-emoji">${f.icon}</div>
+                            <div class="famous-ancient-name">${escapeHtml(match.name)}</div>
+                            <div class="famous-ancient-period">${f.label}<br>${ageDisplay}</div>
+                            <div class="famous-ancient-similarity">${similarity.toFixed(1)}%</div>
                         </div>
                     `;
                 }
