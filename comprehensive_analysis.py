@@ -1,935 +1,622 @@
 #!/usr/bin/env python3
 """
-Comprehensive Genetic Analysis - 800+ Markers with Agent-Friendly Output
-Full health, ancestry, traits, and actionable recommendations.
+Comprehensive Genetic Analysis - 2000+ Markers
+Full health, pharmacogenomics, ancestry, traits, and actionable recommendations.
 Works with ANY ancestry/ethnic background worldwide.
 
-Privacy: All analysis runs locally. No network requests.
+Supports:
+- 23andMe (v3, v4, v5)
+- AncestryDNA
+- MyHeritage
+- FamilyTreeDNA
+- Nebula Genomics
+- VCF files (whole genome/exome)
 
-Output includes:
+Privacy: All analysis runs locally. Zero network requests.
+
+Output:
 - Human-readable reports
-- Agent-friendly JSON with actionable fields
-- Polygenic risk scores
-- Evidence-based recommendations
+- Agent-friendly JSON with actionable fields and priorities
+- Polygenic risk scores for major conditions
+- Evidence-based recommendations with citations
 """
 
 import sys
 import json
+import gzip
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 
-# Try to import from markers module, fall back to inline definitions
-try:
-    from markers.health_markers import HEALTH_MARKERS as IMPORTED_HEALTH_MARKERS
-    from markers.trait_markers import TRAIT_MARKERS as IMPORTED_TRAIT_MARKERS
-    USE_MARKER_MODULE = True
-except ImportError:
-    USE_MARKER_MODULE = False
-
+# Output directory
 OUTPUT_DIR = Path.home() / "dna-analysis" / "reports"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# =============================================================================
-# COMPLETE Y-DNA HAPLOGROUP DATABASE (All major clades A-T)
-# =============================================================================
+# Try to import marker modules
+try:
+    from markers.pharmacogenomics import PHARMACOGENOMICS_MARKERS, DRUG_INTERACTIONS
+    from markers.polygenic_scores import PRS_WEIGHTS, PRS_CONDITIONS, calculate_prs
+    from markers.carrier_status import CARRIER_MARKERS, CARRIER_SCREENING_PANELS
+    from markers.health_risks import HEALTH_RISK_MARKERS
+    from markers.traits import TRAIT_MARKERS
+    from markers.nutrition import NUTRITION_MARKERS
+    from markers.fitness import FITNESS_MARKERS
+    from markers.neurogenetics import NEURO_MARKERS
+    from markers.longevity import LONGEVITY_MARKERS
+    from markers.immunity import IMMUNITY_MARKERS, HLA_DRUG_ALERTS
+    MODULES_LOADED = True
+except ImportError as e:
+    print(f"Warning: Could not load marker modules: {e}")
+    print("Using inline markers only.")
+    MODULES_LOADED = False
+    PHARMACOGENOMICS_MARKERS = {}
+    DRUG_INTERACTIONS = {}
+    PRS_WEIGHTS = {}
+    PRS_CONDITIONS = {}
+    CARRIER_MARKERS = {}
+    HEALTH_RISK_MARKERS = {}
+    TRAIT_MARKERS = {}
+    NUTRITION_MARKERS = {}
+    FITNESS_MARKERS = {}
+    NEURO_MARKERS = {}
+    LONGEVITY_MARKERS = {}
+    IMMUNITY_MARKERS = {}
+    HLA_DRUG_ALERTS = {}
 
-Y_HAPLOGROUPS = {
-    # African origin haplogroups
-    "A": {
-        "origin": "Africa (oldest Y lineage)",
-        "age": "~270,000 years",
-        "distribution": ["Khoisan", "Ethiopia", "Sudan", "Central Africa"],
-        "markers": ["rs2032597", "rs9786714"]
-    },
-    "B": {
-        "origin": "Africa",
-        "age": "~90,000 years", 
-        "distribution": ["Pygmies", "Hadza", "Central/Southern Africa"],
-        "markers": ["rs9786076"]
-    },
-    "C": {
-        "origin": "South/Southeast Asia",
-        "age": "~65,000 years",
-        "distribution": ["Mongolia", "Siberia", "Australia", "Pacific", "Native American (rare)"],
-        "markers": ["rs35284970", "rs17250135"]
-    },
-    "D": {
-        "origin": "Asia",
-        "age": "~65,000 years",
-        "distribution": ["Tibet", "Japan (Ainu/Jomon)", "Andaman Islands"],
-        "markers": ["rs2032602"]
-    },
-    "E": {
-        "origin": "Africa/Middle East",
-        "age": "~65,000 years",
-        "distribution": ["Africa (majority)", "Mediterranean", "Middle East", "Ashkenazi Jewish"],
-        "markers": ["rs9341296", "rs2032604"]
-    },
-    "F": {
-        "origin": "South Asia",
-        "age": "~50,000 years",
-        "distribution": ["South Asia", "ancestor of G-T"],
-        "markers": []
-    },
-    "G": {
-        "origin": "Caucasus/Middle East",
-        "age": "~45,000 years",
-        "distribution": ["Caucasus", "Sardinia", "Anatolia", "spread with Neolithic farmers"],
-        "markers": ["rs2032636", "rs2032666"]
-    },
-    "H": {
-        "origin": "South Asia",
-        "age": "~40,000 years",
-        "distribution": ["India", "Sri Lanka", "Nepal", "Roma/Romani"],
-        "markers": ["rs2032639"]
-    },
-    "I": {
-        "origin": "Europe (Paleolithic)",
-        "age": "~42,000 years",
-        "distribution": ["Scandinavia (I1)", "Balkans (I2)", "Sardinia", "Western Hunter-Gatherers"],
-        "markers": ["rs2032652", "rs9341308"]
-    },
-    "J": {
-        "origin": "Middle East",
-        "age": "~45,000 years",
-        "distribution": ["Middle East", "Mediterranean", "Jewish populations", "North Africa"],
-        "markers": ["rs2032631", "rs17306671"]
-    },
-    "K": {
-        "origin": "South/Central Asia",
-        "age": "~45,000 years",
-        "distribution": ["Ancestor of L-T", "rare as terminal"],
-        "markers": []
-    },
-    "L": {
-        "origin": "South Asia",
-        "age": "~40,000 years",
-        "distribution": ["India", "Pakistan", "Central Asia"],
-        "markers": []
-    },
-    "M": {
-        "origin": "Melanesia",
-        "age": "~35,000 years",
-        "distribution": ["Papua New Guinea", "Melanesia"],
-        "markers": []
-    },
-    "N": {
-        "origin": "East Asia/Siberia",
-        "age": "~35,000 years",
-        "distribution": ["Finland", "Baltic", "Siberia", "Uralic peoples"],
-        "markers": ["rs9341301"]
-    },
-    "O": {
-        "origin": "East Asia",
-        "age": "~35,000 years",
-        "distribution": ["China", "Japan", "Korea", "Southeast Asia (majority)"],
-        "markers": ["rs3908", "rs2032678"]
-    },
-    "P": {
-        "origin": "Central Asia",
-        "age": "~45,000 years",
-        "distribution": ["Ancestor of Q and R"],
-        "markers": []
-    },
-    "Q": {
-        "origin": "Central/North Asia",
-        "age": "~30,000 years",
-        "distribution": ["Native Americans (majority)", "Siberia", "Central Asia"],
-        "markers": ["rs17316625", "rs3894"]
-    },
-    "R": {
-        "origin": "Central Asia/South Siberia",
-        "age": "~28,000 years",
-        "distribution": ["R1a: Eastern Europe, South Asia", "R1b: Western Europe (majority)"],
-        "markers": ["rs9786184", "rs17250804"]
-    },
-    "S": {
-        "origin": "Melanesia",
-        "age": "~35,000 years",
-        "distribution": ["Papua New Guinea", "Indonesia"],
-        "markers": []
-    },
-    "T": {
-        "origin": "Middle East",
-        "age": "~40,000 years",
-        "distribution": ["East Africa", "Mediterranean", "South Asia (rare)"],
-        "markers": []
-    },
-}
 
 # =============================================================================
-# COMPLETE mtDNA HAPLOGROUP DATABASE
+# FILE FORMAT DETECTION AND LOADING
 # =============================================================================
 
-MT_HAPLOGROUPS = {
-    # African (L lineages)
-    "L0": {"origin": "Africa (oldest)", "age": "~150,000 years", "distribution": ["Khoisan", "East Africa"]},
-    "L1": {"origin": "Africa", "age": "~130,000 years", "distribution": ["Central/West Africa", "Pygmies"]},
-    "L2": {"origin": "Africa", "age": "~90,000 years", "distribution": ["West/Central Africa", "African diaspora"]},
-    "L3": {"origin": "Africa", "age": "~70,000 years", "distribution": ["East Africa", "ancestor of M and N"]},
-    "L4": {"origin": "Africa", "age": "~80,000 years", "distribution": ["East Africa"]},
-    "L5": {"origin": "Africa", "age": "~120,000 years", "distribution": ["East Africa"]},
-    "L6": {"origin": "Africa", "age": "~50,000 years", "distribution": ["Yemen", "Ethiopia"]},
+def detect_format(filepath: str) -> str:
+    """Detect DNA file format."""
+    filepath = str(filepath)
     
-    # Out of Africa (M and N)
-    "M": {"origin": "South Asia", "age": "~60,000 years", "distribution": ["South Asia", "East Asia"]},
-    "N": {"origin": "Middle East", "age": "~60,000 years", "distribution": ["ancestor of most non-African lineages"]},
+    if filepath.endswith('.vcf') or filepath.endswith('.vcf.gz'):
+        return 'vcf'
     
-    # European/West Eurasian
-    "H": {"origin": "Europe", "age": "~25,000 years", "distribution": ["Europe (40-50%)", "spread post-LGM"]},
-    "HV": {"origin": "Middle East", "age": "~30,000 years", "distribution": ["ancestor of H and V"]},
-    "V": {"origin": "Iberia", "age": "~15,000 years", "distribution": ["Europe", "Saami"]},
-    "U": {"origin": "West Asia", "age": "~55,000 years", "distribution": ["Europe", "Strong in WHG"]},
-    "K": {"origin": "Middle East", "age": "~30,000 years", "distribution": ["Europe", "Ashkenazi Jewish"]},
-    "J": {"origin": "Middle East", "age": "~45,000 years", "distribution": ["Europe", "spread with Neolithic"]},
-    "T": {"origin": "Middle East", "age": "~25,000 years", "distribution": ["Europe", "spread with Neolithic"]},
-    "I": {"origin": "Europe", "age": "~30,000 years", "distribution": ["Northern Europe"]},
-    "W": {"origin": "South Asia", "age": "~25,000 years", "distribution": ["Europe", "South Asia"]},
-    "X": {"origin": "Middle East", "age": "~30,000 years", "distribution": ["Europe", "Native American", "Druze"]},
+    # Read first few lines to detect format
+    opener = gzip.open if filepath.endswith('.gz') else open
+    mode = 'rt' if filepath.endswith('.gz') else 'r'
     
-    # East Asian
-    "A": {"origin": "East Asia", "age": "~50,000 years", "distribution": ["East Asia", "Native American"]},
-    "B": {"origin": "East Asia", "age": "~50,000 years", "distribution": ["East Asia", "Polynesia", "Native American"]},
-    "C": {"origin": "East Asia", "age": "~60,000 years", "distribution": ["East Asia", "Siberia", "Native American"]},
-    "D": {"origin": "East Asia", "age": "~60,000 years", "distribution": ["East Asia", "Siberia", "Native American"]},
-    "F": {"origin": "East Asia", "age": "~45,000 years", "distribution": ["East/Southeast Asia"]},
-    "G": {"origin": "East Asia", "age": "~40,000 years", "distribution": ["East Asia", "Central Asia"]},
-    "Y": {"origin": "East Asia", "age": "~35,000 years", "distribution": ["Japan", "Ainu"]},
-    "Z": {"origin": "East Asia", "age": "~25,000 years", "distribution": ["Central Asia", "Siberia", "Saami"]},
+    with opener(filepath, mode) as f:
+        header_lines = []
+        for i, line in enumerate(f):
+            if i >= 20:
+                break
+            header_lines.append(line)
     
-    # South Asian
-    "M2": {"origin": "South Asia", "age": "~50,000 years", "distribution": ["India"]},
-    "M3": {"origin": "South Asia", "age": "~50,000 years", "distribution": ["India"]},
-    "M4": {"origin": "South Asia", "age": "~50,000 years", "distribution": ["India", "Pakistan"]},
-    "M5": {"origin": "South Asia", "age": "~50,000 years", "distribution": ["India"]},
-    "R": {"origin": "South Asia", "age": "~60,000 years", "distribution": ["South Asia", "ancestor of B, H, etc."]},
+    content = ''.join(header_lines).lower()
     
-    # Oceanian
-    "P": {"origin": "Near Oceania", "age": "~50,000 years", "distribution": ["Papua New Guinea", "Australia"]},
-    "Q": {"origin": "Near Oceania", "age": "~50,000 years", "distribution": ["Papua New Guinea", "Melanesia"]},
-    "S": {"origin": "Near Oceania", "age": "~50,000 years", "distribution": ["Australia", "Papua New Guinea"]},
-}
-
-# =============================================================================
-# COMPREHENSIVE HEALTH MARKER DATABASE (800+ markers)
-# =============================================================================
-
-HEALTH_MARKERS = {
-    # APOE - Critical for Alzheimer's/CVD
-    "rs429358": {
-        "gene": "APOE", "name": "APOE ε4 marker 1",
-        "risk_allele": "C", "protective_allele": "T",
-        "conditions": ["Alzheimer's disease", "Cardiovascular disease", "Longevity"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "high",
-            "action_type": "lifestyle_modification",
-            "recommendations": [
-                "Regular cardiovascular exercise",
-                "Mediterranean diet",
-                "Cognitive engagement",
-                "Sleep optimization"
-            ]
-        }
-    },
-    "rs7412": {
-        "gene": "APOE", "name": "APOE ε2/ε4 marker",
-        "risk_allele": "C", "protective_allele": "T",
-        "conditions": ["Alzheimer's disease", "Lipid metabolism"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "high",
-            "action_type": "screening",
-            "recommendations": ["Lipid panel monitoring", "Cognitive screening if family history"]
-        }
-    },
-    
-    # Cardiovascular
-    "rs1333049": {
-        "gene": "9p21", "name": "CAD risk locus",
-        "risk_allele": "C", "protective_allele": "G",
-        "conditions": ["Coronary artery disease", "Myocardial infarction"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "medium",
-            "action_type": "lifestyle_modification",
-            "recommendations": ["Cardiovascular screening", "Lipid optimization", "Exercise"]
-        }
-    },
-    "rs6025": {
-        "gene": "F5", "name": "Factor V Leiden",
-        "risk_allele": "A", "protective_allele": "G",
-        "conditions": ["Deep vein thrombosis", "Pulmonary embolism"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "high",
-            "action_type": "medical_alert",
-            "recommendations": [
-                "Inform healthcare providers before surgery",
-                "Avoid prolonged immobility",
-                "Consider compression stockings on long flights"
-            ]
-        }
-    },
-    "rs1799963": {
-        "gene": "F2", "name": "Prothrombin G20210A",
-        "risk_allele": "A", "protective_allele": "G",
-        "conditions": ["Venous thromboembolism"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "high",
-            "action_type": "medical_alert",
-            "recommendations": ["Inform healthcare providers", "VTE prevention awareness"]
-        }
-    },
-    
-    # Methylation/Detox
-    "rs1801133": {
-        "gene": "MTHFR", "name": "C677T",
-        "risk_allele": "A", "protective_allele": "G",
-        "conditions": ["Elevated homocysteine", "Folate metabolism"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "medium",
-            "action_type": "supplementation",
-            "recommendations": ["Methylfolate supplementation", "B12 optimization", "Homocysteine testing"]
-        }
-    },
-    "rs1801131": {
-        "gene": "MTHFR", "name": "A1298C",
-        "risk_allele": "G", "protective_allele": "T",
-        "conditions": ["BH4 metabolism", "Neurotransmitter synthesis"],
-        "evidence": "moderate",
-        "actionable": {
-            "priority": "low",
-            "action_type": "supplementation",
-            "recommendations": ["Consider methylfolate if compound heterozygous"]
-        }
-    },
-    "rs4680": {
-        "gene": "COMT", "name": "Val158Met",
-        "risk_allele": "A", "protective_allele": "G",
-        "conditions": ["Stress response", "Pain sensitivity", "Estrogen metabolism"],
-        "evidence": "moderate",
-        "note": "GG=Warrior (stress-resilient), AA=Worrier (detail-oriented)",
-        "actionable": {
-            "priority": "low",
-            "action_type": "lifestyle_modification",
-            "recommendations": ["Stress management if AA", "Magnesium for AA genotype"]
-        }
-    },
-    
-    # Diabetes
-    "rs7903146": {
-        "gene": "TCF7L2", "name": "T2D strongest risk variant",
-        "risk_allele": "T", "protective_allele": "C",
-        "conditions": ["Type 2 diabetes"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "medium",
-            "action_type": "lifestyle_modification",
-            "recommendations": ["Blood sugar monitoring", "Low glycemic diet", "Regular exercise"]
-        }
-    },
-    "rs1801282": {
-        "gene": "PPARG", "name": "Pro12Ala",
-        "risk_allele": "C", "protective_allele": "G",
-        "conditions": ["Insulin sensitivity", "Type 2 diabetes"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "low",
-            "action_type": "lifestyle_modification",
-            "recommendations": ["Weight management", "Exercise"]
-        }
-    },
-    
-    # Obesity
-    "rs9939609": {
-        "gene": "FTO", "name": "Obesity risk variant",
-        "risk_allele": "A", "protective_allele": "T",
-        "conditions": ["Obesity", "BMI"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "medium",
-            "action_type": "lifestyle_modification",
-            "recommendations": ["Portion control", "Physical activity", "Protein-rich diet may help"]
-        }
-    },
-    "rs17782313": {
-        "gene": "MC4R", "name": "Appetite regulation",
-        "risk_allele": "C", "protective_allele": "T",
-        "conditions": ["Obesity", "Appetite"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "low",
-            "action_type": "lifestyle_modification",
-            "recommendations": ["Mindful eating", "Structured meal timing"]
-        }
-    },
-    
-    # Iron
-    "rs1800562": {
-        "gene": "HFE", "name": "C282Y",
-        "risk_allele": "A", "protective_allele": "G",
-        "conditions": ["Hereditary hemochromatosis", "Iron overload"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "high",
-            "action_type": "medical_alert",
-            "recommendations": [
-                "Ferritin/iron monitoring",
-                "AVOID iron supplements",
-                "Consider blood donation if levels high"
-            ]
-        }
-    },
-    "rs1799945": {
-        "gene": "HFE", "name": "H63D",
-        "risk_allele": "G", "protective_allele": "C",
-        "conditions": ["Iron overload (mild)"],
-        "evidence": "moderate",
-        "actionable": {
-            "priority": "low",
-            "action_type": "monitoring",
-            "recommendations": ["Periodic ferritin check"]
-        }
-    },
-    
-    # Celiac/Gluten
-    "rs2187668": {
-        "gene": "HLA-DQ2.5", "name": "Celiac risk",
-        "risk_allele": "T", "protective_allele": "C",
-        "conditions": ["Celiac disease"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "medium",
-            "action_type": "screening",
-            "recommendations": ["tTG-IgA test if symptoms", "Genetic counseling"]
-        }
-    },
-    
-    # Eye Health
-    "rs1061170": {
-        "gene": "CFH", "name": "Y402H",
-        "risk_allele": "C", "protective_allele": "T",
-        "conditions": ["Age-related macular degeneration"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "medium",
-            "action_type": "supplementation",
-            "recommendations": ["Lutein/zeaxanthin", "Regular eye exams", "Don't smoke"]
-        }
-    },
-    "rs10490924": {
-        "gene": "ARMS2", "name": "AMD risk",
-        "risk_allele": "T", "protective_allele": "G",
-        "conditions": ["Age-related macular degeneration"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "medium",
-            "action_type": "supplementation",
-            "recommendations": ["AREDS2 formula if at risk", "UV protection"]
-        }
-    },
-    
-    # Pharmacogenomics
-    "rs4244285": {
-        "gene": "CYP2C19", "name": "*2 allele",
-        "risk_allele": "A", "protective_allele": "G",
-        "conditions": ["Clopidogrel response", "Drug metabolism"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "high",
-            "action_type": "medical_alert",
-            "recommendations": ["Inform doctor if prescribed Plavix/clopidogrel", "May need alternative"]
-        }
-    },
-    "rs1799853": {
-        "gene": "CYP2C9", "name": "*2 allele",
-        "risk_allele": "T", "protective_allele": "C",
-        "conditions": ["Warfarin sensitivity"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "high",
-            "action_type": "medical_alert",
-            "recommendations": ["Lower warfarin dose may be needed", "Inform prescribers"]
-        }
-    },
-    "rs1057910": {
-        "gene": "CYP2C9", "name": "*3 allele",
-        "risk_allele": "C", "protective_allele": "A",
-        "conditions": ["Warfarin sensitivity", "NSAID metabolism"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "high",
-            "action_type": "medical_alert",
-            "recommendations": ["Significant warfarin dose reduction", "Inform prescribers"]
-        }
-    },
-    "rs9923231": {
-        "gene": "VKORC1", "name": "Warfarin sensitivity",
-        "risk_allele": "T", "protective_allele": "C",
-        "conditions": ["Warfarin dosing"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "high",
-            "action_type": "medical_alert",
-            "recommendations": ["TT genotype needs ~50% lower warfarin dose"]
-        }
-    },
-    "rs4149056": {
-        "gene": "SLCO1B1", "name": "Statin myopathy",
-        "risk_allele": "C", "protective_allele": "T",
-        "conditions": ["Statin-induced myopathy"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "medium",
-            "action_type": "medical_alert",
-            "recommendations": ["Monitor for muscle pain on statins", "Lower dose or different statin"]
-        }
-    },
-    "rs762551": {
-        "gene": "CYP1A2", "name": "Caffeine metabolism",
-        "risk_allele": "C", "protective_allele": "A",
-        "conditions": ["Caffeine metabolism"],
-        "evidence": "moderate",
-        "actionable": {
-            "priority": "low",
-            "action_type": "lifestyle_modification",
-            "recommendations": ["CC = slow metabolizer, limit afternoon caffeine"]
-        }
-    },
-    
-    # Longevity
-    "rs2802292": {
-        "gene": "FOXO3", "name": "Longevity variant",
-        "risk_allele": "T", "protective_allele": "G",
-        "conditions": ["Longevity"],
-        "evidence": "moderate",
-        "note": "G allele associated with exceptional longevity",
-        "actionable": {
-            "priority": "informational",
-            "action_type": "none",
-            "recommendations": []
-        }
-    },
-    "rs2542052": {
-        "gene": "TERT", "name": "Telomere length",
-        "risk_allele": "T", "protective_allele": "C",
-        "conditions": ["Cellular aging"],
-        "evidence": "moderate",
-        "actionable": {
-            "priority": "informational",
-            "action_type": "lifestyle_modification",
-            "recommendations": ["Exercise and stress reduction support telomere health"]
-        }
-    },
-    
-    # Oxidative Stress
-    "rs4880": {
-        "gene": "SOD2", "name": "Ala16Val",
-        "risk_allele": "A", "protective_allele": "G",
-        "conditions": ["Oxidative stress"],
-        "evidence": "moderate",
-        "actionable": {
-            "priority": "low",
-            "action_type": "supplementation",
-            "recommendations": ["AA genotype may benefit from antioxidants (NAC, CoQ10)"]
-        }
-    },
-    
-    # Vitamin D
-    "rs2282679": {
-        "gene": "GC", "name": "Vitamin D binding protein",
-        "risk_allele": "G", "protective_allele": "T",
-        "conditions": ["Vitamin D levels"],
-        "evidence": "strong",
-        "actionable": {
-            "priority": "medium",
-            "action_type": "supplementation",
-            "recommendations": ["Test 25(OH)D levels", "May need higher D3 dose", "Take with K2"]
-        }
-    },
-    "rs12785878": {
-        "gene": "DHCR7", "name": "Vitamin D synthesis",
-        "risk_allele": "T", "protective_allele": "G",
-        "conditions": ["Vitamin D synthesis"],
-        "evidence": "moderate",
-        "actionable": {
-            "priority": "low",
-            "action_type": "supplementation",
-            "recommendations": ["Reduced synthesis from sun exposure"]
-        }
-    },
-    
-    # Neurological
-    "rs6265": {
-        "gene": "BDNF", "name": "Val66Met",
-        "risk_allele": "T", "protective_allele": "C",
-        "conditions": ["Memory", "Neuroplasticity", "Depression risk"],
-        "evidence": "moderate",
-        "actionable": {
-            "priority": "low",
-            "action_type": "lifestyle_modification",
-            "recommendations": ["Exercise especially important (increases BDNF)", "Cognitive training"]
-        }
-    },
-    "rs1800497": {
-        "gene": "DRD2/ANKK1", "name": "Taq1A",
-        "risk_allele": "A", "protective_allele": "G",
-        "conditions": ["Dopamine signaling", "Addiction risk"],
-        "evidence": "moderate",
-        "actionable": {
-            "priority": "low",
-            "action_type": "awareness",
-            "recommendations": ["Awareness of addiction susceptibility"]
-        }
-    },
-    "rs53576": {
-        "gene": "OXTR", "name": "Oxytocin receptor",
-        "risk_allele": "A", "protective_allele": "G",
-        "conditions": ["Empathy", "Social behavior"],
-        "evidence": "moderate",
-        "note": "GG associated with higher empathy/social sensitivity",
-        "actionable": {
-            "priority": "informational",
-            "action_type": "none",
-            "recommendations": []
-        }
-    },
-}
-
-# Add 600+ more markers in batches...
-ADDITIONAL_MARKERS = {
-    # Cancer screening markers (common variants only)
-    "rs2981582": {"gene": "FGFR2", "risk": "A", "condition": "Breast cancer", "evidence": "strong"},
-    "rs13281615": {"gene": "8q24", "risk": "G", "condition": "Breast cancer", "evidence": "moderate"},
-    "rs6983267": {"gene": "8q24", "risk": "G", "condition": "Colorectal cancer", "evidence": "strong"},
-    "rs4779584": {"gene": "15q13", "risk": "T", "condition": "Colorectal cancer", "evidence": "moderate"},
-    "rs1447295": {"gene": "8q24", "risk": "A", "condition": "Prostate cancer", "evidence": "strong"},
-    "rs401681": {"gene": "TERT", "risk": "T", "condition": "Multiple cancers", "evidence": "strong"},
-    
-    # Autoimmune
-    "rs2476601": {"gene": "PTPN22", "risk": "A", "condition": "Multiple autoimmune", "evidence": "strong"},
-    "rs3087243": {"gene": "CTLA4", "risk": "G", "condition": "T1D/Graves", "evidence": "strong"},
-    "rs11209026": {"gene": "IL23R", "risk": "G", "condition": "IBD (protective)", "evidence": "strong"},
-    
-    # Psychiatric
-    "rs1360780": {"gene": "FKBP5", "risk": "T", "condition": "PTSD/stress", "evidence": "moderate"},
-    "rs6313": {"gene": "HTR2A", "risk": "A", "condition": "Antidepressant response", "evidence": "moderate"},
-    
-    # Sleep
-    "rs1801260": {"gene": "CLOCK", "risk": "C", "condition": "Eveningness", "evidence": "moderate"},
-    "rs57875989": {"gene": "PER2", "risk": "G", "condition": "FASP (extreme morning)", "evidence": "strong"},
-}
-
-
-def load_dna_file(filepath):
-    """Load DNA data from common formats."""
-    import pandas as pd
-    
-    df = pd.read_csv(filepath, sep='\t', comment='#', dtype=str, low_memory=False)
-    
-    if 'rsid' in df.columns:
-        df['genotype'] = df['allele1'].fillna('') + df['allele2'].fillna('')
-        df = df.set_index('rsid')
-    elif 'rsID' in df.columns:
-        df['genotype'] = df['allele1'].fillna('') + df['allele2'].fillna('')
-        df = df.rename(columns={'rsID': 'rsid'}).set_index('rsid')
+    if '23andme' in content:
+        return '23andme'
+    elif 'ancestrydna' in content:
+        return 'ancestry'
+    elif 'myheritage' in content:
+        return 'myheritage'
+    elif 'ftdna' in content or 'family tree dna' in content:
+        return 'ftdna'
+    elif '#rsid' in content or 'rsid\t' in content:
+        return 'generic'
     else:
-        df.columns = ['rsid', 'chromosome', 'position', 'genotype'] + list(df.columns[4:])
-        df = df.set_index('rsid')
+        return 'generic'
+
+
+def load_vcf(filepath: str) -> Dict[str, str]:
+    """Load VCF file into rsid -> genotype dict."""
+    genotypes = {}
     
-    return df
+    opener = gzip.open if str(filepath).endswith('.gz') else open
+    mode = 'rt' if str(filepath).endswith('.gz') else 'r'
+    
+    with opener(filepath, mode) as f:
+        for line in f:
+            if line.startswith('#'):
+                continue
+            
+            parts = line.strip().split('\t')
+            if len(parts) < 10:
+                continue
+            
+            chrom, pos, rsid, ref, alt, qual, filt, info, fmt, sample = parts[:10]
+            
+            if not rsid.startswith('rs'):
+                continue
+            
+            # Parse genotype
+            fmt_fields = fmt.split(':')
+            sample_fields = sample.split(':')
+            
+            gt_idx = fmt_fields.index('GT') if 'GT' in fmt_fields else 0
+            gt = sample_fields[gt_idx] if gt_idx < len(sample_fields) else './.'
+            
+            # Convert GT to alleles
+            alleles = [ref] + alt.split(',')
+            gt_parts = gt.replace('|', '/').split('/')
+            
+            try:
+                a1 = alleles[int(gt_parts[0])] if gt_parts[0] != '.' else '?'
+                a2 = alleles[int(gt_parts[1])] if len(gt_parts) > 1 and gt_parts[1] != '.' else a1
+                genotypes[rsid] = a1 + a2
+            except (ValueError, IndexError):
+                continue
+    
+    return genotypes
 
 
-def get_genotype(df, rsid):
-    try:
-        return df.loc[rsid, 'genotype']
-    except:
-        return None
+def load_consumer_format(filepath: str) -> Dict[str, str]:
+    """Load 23andMe, Ancestry, or similar format."""
+    genotypes = {}
+    
+    opener = gzip.open if str(filepath).endswith('.gz') else open
+    mode = 'rt' if str(filepath).endswith('.gz') else 'r'
+    
+    with opener(filepath, mode) as f:
+        for line in f:
+            if line.startswith('#') or not line.strip():
+                continue
+            
+            parts = line.strip().split('\t')
+            if len(parts) < 4:
+                parts = line.strip().split(',')
+            
+            if len(parts) >= 4:
+                rsid = parts[0]
+                if rsid.startswith('rs'):
+                    # Format: rsid, chrom, pos, genotype
+                    genotype = parts[3].replace(' ', '')
+                    if genotype and genotype != '--' and genotype != '00':
+                        genotypes[rsid] = genotype
+    
+    return genotypes
 
 
-def infer_apoe_status(df) -> Dict[str, Any]:
-    """Infer APOE genotype from rs429358 and rs7412."""
-    rs429358 = get_genotype(df, 'rs429358')
-    rs7412 = get_genotype(df, 'rs7412')
+def load_dna_file(filepath: str) -> Tuple[Dict[str, str], str]:
+    """Load DNA data from any supported format."""
+    fmt = detect_format(filepath)
+    print(f"Detected format: {fmt}")
+    
+    if fmt == 'vcf':
+        genotypes = load_vcf(filepath)
+    else:
+        genotypes = load_consumer_format(filepath)
+    
+    return genotypes, fmt
+
+
+# =============================================================================
+# APOE DETERMINATION
+# =============================================================================
+
+def determine_apoe(genotypes: Dict[str, str]) -> Dict[str, Any]:
+    """Determine APOE genotype from rs429358 and rs7412."""
+    rs429358 = genotypes.get('rs429358', '')
+    rs7412 = genotypes.get('rs7412', '')
     
     if not rs429358 or not rs7412:
-        return {"genotype": "unknown", "risk_level": "unknown", "rs429358": rs429358, "rs7412": rs7412, "actionable": False}
+        return {
+            "genotype": "unknown",
+            "risk_level": "unknown",
+            "rs429358": rs429358,
+            "rs7412": rs7412,
+            "interpretation": "Unable to determine APOE status"
+        }
     
-    # APOE determination
+    # Determine alleles
     # ε2: rs429358=T, rs7412=T
-    # ε3: rs429358=T, rs7412=C  
+    # ε3: rs429358=T, rs7412=C
     # ε4: rs429358=C, rs7412=C
     
-    apoe_status = []
-    for i in range(2):
-        a1 = rs429358[i] if len(rs429358) > i else None
-        a2 = rs7412[i] if len(rs7412) > i else None
+    alleles = []
+    for i in range(min(len(rs429358), len(rs7412))):
+        c1 = rs429358[i].upper()
+        c2 = rs7412[i].upper()
         
-        if a1 == 'T' and a2 == 'T':
-            apoe_status.append('ε2')
-        elif a1 == 'T' and a2 == 'C':
-            apoe_status.append('ε3')
-        elif a1 == 'C' and a2 == 'C':
-            apoe_status.append('ε4')
+        if c1 == 'T' and c2 == 'T':
+            alleles.append('ε2')
+        elif c1 == 'T' and c2 == 'C':
+            alleles.append('ε3')
+        elif c1 == 'C' and c2 == 'C':
+            alleles.append('ε4')
     
-    genotype = '/'.join(sorted(apoe_status)) if apoe_status else 'unknown'
+    if len(alleles) == 2:
+        genotype = '/'.join(sorted(alleles))
+    elif len(alleles) == 1:
+        genotype = alleles[0] + '/' + alleles[0]
+    else:
+        genotype = 'unknown'
     
-    risk_levels = {
-        'ε2/ε2': 'low',
-        'ε2/ε3': 'low',
-        'ε3/ε3': 'average',
-        'ε2/ε4': 'moderate',
-        'ε3/ε4': 'elevated',
-        'ε4/ε4': 'high'
+    risk_info = {
+        'ε2/ε2': ('low', 'Protective. Lower Alzheimer\'s risk, but higher triglycerides.'),
+        'ε2/ε3': ('low', 'Below average Alzheimer\'s risk.'),
+        'ε3/ε3': ('average', 'Most common genotype. Average risk.'),
+        'ε2/ε4': ('moderate', 'Mixed effects. ε2 partially offsets ε4.'),
+        'ε3/ε4': ('elevated', '~3x Alzheimer\'s risk vs ε3/ε3. Lifestyle modifications important.'),
+        'ε4/ε4': ('high', '~12x Alzheimer\'s risk. Exercise, diet, sleep, and cognitive engagement are protective.')
     }
+    
+    risk_level, interpretation = risk_info.get(genotype, ('unknown', 'Unable to interpret'))
     
     return {
         "genotype": genotype,
-        "risk_level": risk_levels.get(genotype, 'unknown'),
+        "risk_level": risk_level,
         "rs429358": rs429358,
         "rs7412": rs7412,
-        "actionable": genotype in ['ε3/ε4', 'ε4/ε4']
+        "interpretation": interpretation,
+        "actionable": risk_level in ['elevated', 'high'],
+        "recommendations": [
+            "Regular aerobic exercise (strongest protective factor)",
+            "Mediterranean diet",
+            "7-8 hours quality sleep",
+            "Cognitive engagement and social connection",
+            "Cardiovascular risk factor management"
+        ] if risk_level in ['elevated', 'high'] else []
     }
 
 
-def analyze_health_markers(df) -> Dict[str, Any]:
-    """Analyze all health markers with actionable output."""
+# =============================================================================
+# ANALYSIS FUNCTIONS
+# =============================================================================
+
+def analyze_markers(genotypes: Dict[str, str], markers: Dict, category: str) -> Dict[str, Any]:
+    """Analyze a category of markers."""
     results = {
-        "summary": {
-            "total_analyzed": 0,
-            "risk_variants_found": 0,
-            "high_priority_actions": [],
-            "medium_priority_actions": [],
-            "low_priority_actions": []
-        },
-        "apoe": infer_apoe_status(df),
-        "markers": [],
+        "category": category,
+        "total_in_database": len(markers),
+        "found_in_data": 0,
+        "risk_variants": 0,
+        "findings": [],
         "actionable_items": []
     }
     
-    for rsid, info in HEALTH_MARKERS.items():
-        geno = get_genotype(df, rsid)
-        if geno:
-            results["summary"]["total_analyzed"] += 1
-            risk_count = geno.count(info.get("risk_allele", "X"))
+    for rsid, info in markers.items():
+        geno = genotypes.get(rsid)
+        if not geno:
+            continue
+        
+        results["found_in_data"] += 1
+        
+        # Determine if risk allele present
+        risk_allele = info.get('risk_allele') or info.get('effect_allele')
+        risk_count = geno.upper().count(risk_allele.upper()) if risk_allele else 0
+        
+        finding = {
+            "rsid": rsid,
+            "gene": info.get('gene', 'Unknown'),
+            "genotype": geno,
+            "risk_allele": risk_allele,
+            "risk_copies": risk_count,
+            "is_risk": risk_count > 0
+        }
+        
+        # Add variant-specific info
+        for key in ['variant', 'name', 'condition', 'conditions', 'trait', 'effect', 'note', 'evidence']:
+            if key in info:
+                finding[key] = info[key]
+        
+        if risk_count > 0:
+            results["risk_variants"] += 1
             
-            marker_result = {
-                "rsid": rsid,
-                "gene": info["gene"],
-                "name": info["name"],
-                "genotype": geno,
-                "risk_allele": info.get("risk_allele"),
-                "risk_count": risk_count,
-                "is_risk": risk_count > 0,
-                "evidence": info["evidence"],
-                "conditions": info.get("conditions", [])
-            }
-            
-            if risk_count > 0:
-                results["summary"]["risk_variants_found"] += 1
-                
-                if "actionable" in info:
-                    action = {
-                        "rsid": rsid,
-                        "gene": info["gene"],
-                        "genotype": geno,
-                        "priority": info["actionable"]["priority"],
-                        "action_type": info["actionable"]["action_type"],
-                        "recommendations": info["actionable"]["recommendations"],
-                        "evidence_level": info["evidence"]
-                    }
-                    results["actionable_items"].append(action)
-                    
-                    if info["actionable"]["priority"] == "high":
-                        results["summary"]["high_priority_actions"].append(f"{info['gene']}: {info['actionable']['action_type']}")
-                    elif info["actionable"]["priority"] == "medium":
-                        results["summary"]["medium_priority_actions"].append(f"{info['gene']}: {info['actionable']['action_type']}")
-            
-            results["markers"].append(marker_result)
+            # Check for actionable items
+            if 'actionable' in info:
+                action = {
+                    "rsid": rsid,
+                    "gene": info.get('gene'),
+                    "genotype": geno,
+                    **info['actionable']
+                }
+                results["actionable_items"].append(action)
+        
+        results["findings"].append(finding)
     
     return results
 
 
-def generate_agent_summary(health_results: Dict) -> Dict[str, Any]:
-    """Generate agent-friendly summary with clear actionable items."""
+def calculate_all_prs(genotypes: Dict[str, str]) -> Dict[str, Any]:
+    """Calculate polygenic risk scores for all conditions."""
+    if not PRS_WEIGHTS:
+        return {"error": "PRS module not loaded"}
+    
+    scores = {}
+    conditions = set(v['condition'] for v in PRS_WEIGHTS.values())
+    
+    for condition in conditions:
+        condition_snps = {k: v for k, v in PRS_WEIGHTS.items() if v['condition'] == condition}
+        
+        score = 0
+        found = 0
+        for rsid, info in condition_snps.items():
+            geno = genotypes.get(rsid)
+            if geno:
+                found += 1
+                effect_count = geno.upper().count(info['effect'].upper())
+                score += effect_count * info['beta']
+        
+        if found > 5:
+            # Rough percentile estimation
+            import math
+            z = score / math.sqrt(found * 0.5) if found > 0 else 0
+            percentile = min(99, max(1, int(50 + z * 15)))
+        else:
+            percentile = None
+        
+        scores[condition] = {
+            "raw_score": round(score, 3),
+            "snps_found": found,
+            "snps_total": len(condition_snps),
+            "coverage": round(found / len(condition_snps), 2) if condition_snps else 0,
+            "percentile_estimate": percentile,
+            "confidence": "moderate" if found > len(condition_snps) * 0.5 else "low"
+        }
+    
+    return scores
+
+
+# =============================================================================
+# AGENT-FRIENDLY OUTPUT
+# =============================================================================
+
+def generate_agent_summary(all_results: Dict) -> Dict[str, Any]:
+    """Generate structured output optimized for AI agents."""
+    
     summary = {
-        "analysis_date": datetime.now().isoformat(),
-        "total_markers_analyzed": health_results["summary"]["total_analyzed"],
-        "risk_variants_found": health_results["summary"]["risk_variants_found"],
+        "analysis_timestamp": datetime.now().isoformat(),
+        "snps_analyzed": all_results.get("total_snps", 0),
+        "format_detected": all_results.get("format", "unknown"),
         
-        "apoe_status": health_results["apoe"],
+        # Priority-sorted actionable items
+        "critical_alerts": [],
+        "high_priority": [],
+        "medium_priority": [],
+        "low_priority": [],
+        "informational": [],
         
-        "high_priority_alerts": [],
-        "recommended_screenings": [],
-        "supplement_considerations": [],
-        "lifestyle_recommendations": [],
-        "medication_alerts": [],
+        # Key health markers
+        "apoe_status": all_results.get("apoe", {}),
+        "pharmacogenomics_alerts": [],
+        "carrier_status": [],
+        "polygenic_risk_scores": all_results.get("prs", {}),
         
-        "confidence": "moderate",  # Based on SNP array limitations
-        "limitations": [
-            "SNP arrays miss rare variants",
-            "Polygenic risk is probabilistic, not deterministic",
-            "Environmental factors not captured",
-            "Family history should also be considered"
+        # Traits and lifestyle
+        "notable_traits": [],
+        "nutrition_insights": [],
+        "fitness_insights": [],
+        
+        # Metadata
+        "confidence_notes": [
+            "Consumer arrays capture ~0.1% of genome",
+            "Polygenic scores are probabilistic, not deterministic",
+            "Many conditions depend heavily on environment and lifestyle",
+            "These results are not diagnostic - consult healthcare providers"
         ]
     }
     
-    # Categorize actionable items
-    for item in health_results["actionable_items"]:
-        entry = {
-            "gene": item["gene"],
-            "genotype": item["genotype"],
-            "evidence": item["evidence_level"],
-            "recommendations": item["recommendations"]
-        }
-        
-        if item["priority"] == "high":
-            summary["high_priority_alerts"].append(entry)
-        
-        if item["action_type"] == "screening":
-            summary["recommended_screenings"].append(entry)
-        elif item["action_type"] == "supplementation":
-            summary["supplement_considerations"].append(entry)
-        elif item["action_type"] == "lifestyle_modification":
-            summary["lifestyle_recommendations"].append(entry)
-        elif item["action_type"] == "medical_alert":
-            summary["medication_alerts"].append(entry)
+    # Collect all actionable items and sort by priority
+    priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "informational": 4}
+    
+    for category, results in all_results.items():
+        if isinstance(results, dict) and "actionable_items" in results:
+            for item in results["actionable_items"]:
+                priority = item.get("priority", "informational")
+                
+                if priority == "critical":
+                    summary["critical_alerts"].append(item)
+                elif priority == "high":
+                    summary["high_priority"].append(item)
+                elif priority == "medium":
+                    summary["medium_priority"].append(item)
+                elif priority == "low":
+                    summary["low_priority"].append(item)
+                else:
+                    summary["informational"].append(item)
+                
+                # Also add to specific categories
+                if category == "pharmacogenomics":
+                    summary["pharmacogenomics_alerts"].append(item)
+                elif category == "carrier_status":
+                    summary["carrier_status"].append(item)
+    
+    # Add notable traits
+    if "traits" in all_results:
+        for finding in all_results["traits"].get("findings", [])[:20]:
+            if finding.get("effect"):
+                summary["notable_traits"].append({
+                    "trait": finding.get("trait") or finding.get("name"),
+                    "gene": finding.get("gene"),
+                    "genotype": finding.get("genotype"),
+                    "interpretation": finding.get("effect")
+                })
     
     return summary
 
 
-def generate_report(health_results: Dict, agent_summary: Dict) -> str:
+# =============================================================================
+# HUMAN-READABLE REPORT
+# =============================================================================
+
+def generate_report(all_results: Dict, agent_summary: Dict) -> str:
     """Generate human-readable report."""
     lines = []
-    lines.append("=" * 70)
+    
+    lines.append("=" * 78)
     lines.append("COMPREHENSIVE GENETIC ANALYSIS REPORT")
     lines.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    lines.append("=" * 70)
+    lines.append("=" * 78)
     lines.append("")
-    lines.append("⚠️  IMPORTANT DISCLAIMERS:")
-    lines.append("• This is NOT medical advice")
-    lines.append("• Consult healthcare providers before acting on results")
-    lines.append("• Genetic risk ≠ destiny (lifestyle matters)")
+    lines.append("IMPORTANT DISCLAIMERS:")
+    lines.append("  * This is NOT medical advice")
+    lines.append("  * Consult healthcare providers before acting on results")
+    lines.append("  * Genetic risk does not equal destiny - lifestyle matters enormously")
+    lines.append("  * Consumer arrays miss rare variants and structural changes")
     lines.append("")
     
-    # Summary
-    lines.append("-" * 70)
+    # Summary stats
+    lines.append("-" * 78)
     lines.append("SUMMARY")
-    lines.append("-" * 70)
-    lines.append(f"Markers analyzed: {health_results['summary']['total_analyzed']}")
-    lines.append(f"Risk variants found: {health_results['summary']['risk_variants_found']}")
+    lines.append("-" * 78)
+    lines.append(f"SNPs in file: {all_results.get('total_snps', 'N/A'):,}")
+    lines.append(f"File format: {all_results.get('format', 'Unknown')}")
+    lines.append(f"Critical alerts: {len(agent_summary.get('critical_alerts', []))}")
+    lines.append(f"High priority items: {len(agent_summary.get('high_priority', []))}")
     lines.append("")
     
     # APOE
-    apoe = health_results["apoe"]
-    lines.append(f"APOE Status: {apoe['genotype']} (Risk level: {apoe['risk_level']})")
-    lines.append("")
-    
-    # High priority alerts
-    if agent_summary["high_priority_alerts"]:
-        lines.append("-" * 70)
-        lines.append("🚨 HIGH PRIORITY ALERTS")
-        lines.append("-" * 70)
-        for alert in agent_summary["high_priority_alerts"]:
-            lines.append(f"\n  {alert['gene']} ({alert['genotype']})")
-            for rec in alert["recommendations"]:
-                lines.append(f"    • {rec}")
+    apoe = all_results.get("apoe", {})
+    if apoe.get("genotype") != "unknown":
+        lines.append("-" * 78)
+        lines.append("APOE STATUS (Alzheimer's / Cardiovascular)")
+        lines.append("-" * 78)
+        lines.append(f"Genotype: {apoe.get('genotype')}")
+        lines.append(f"Risk level: {apoe.get('risk_level')}")
+        lines.append(f"Interpretation: {apoe.get('interpretation')}")
+        if apoe.get("recommendations"):
+            lines.append("Recommendations:")
+            for rec in apoe["recommendations"]:
+                lines.append(f"  - {rec}")
         lines.append("")
     
-    # Medication alerts
-    if agent_summary["medication_alerts"]:
-        lines.append("-" * 70)
-        lines.append("💊 MEDICATION ALERTS")
-        lines.append("-" * 70)
-        for alert in agent_summary["medication_alerts"]:
-            lines.append(f"\n  {alert['gene']} ({alert['genotype']})")
-            for rec in alert["recommendations"]:
-                lines.append(f"    • {rec}")
+    # Critical alerts
+    if agent_summary.get("critical_alerts"):
+        lines.append("-" * 78)
+        lines.append("!!! CRITICAL ALERTS - SHARE WITH HEALTHCARE PROVIDERS !!!")
+        lines.append("-" * 78)
+        for alert in agent_summary["critical_alerts"]:
+            lines.append(f"\n  {alert.get('gene', 'Unknown')} ({alert.get('rsid')})")
+            lines.append(f"  Genotype: {alert.get('genotype')}")
+            for rec in alert.get("recommendations", []):
+                lines.append(f"    * {rec}")
         lines.append("")
     
-    # Screenings
-    if agent_summary["recommended_screenings"]:
-        lines.append("-" * 70)
-        lines.append("🔬 RECOMMENDED SCREENINGS")
-        lines.append("-" * 70)
-        for item in agent_summary["recommended_screenings"]:
-            lines.append(f"  • {item['gene']}: {', '.join(item['recommendations'])}")
+    # High priority
+    if agent_summary.get("high_priority"):
+        lines.append("-" * 78)
+        lines.append("HIGH PRIORITY FINDINGS")
+        lines.append("-" * 78)
+        for item in agent_summary["high_priority"][:10]:
+            lines.append(f"\n  {item.get('gene', 'Unknown')} ({item.get('rsid')})")
+            lines.append(f"  Genotype: {item.get('genotype')}")
+            if item.get("recommendations"):
+                for rec in item["recommendations"][:3]:
+                    lines.append(f"    - {rec}")
         lines.append("")
     
-    # Supplements
-    if agent_summary["supplement_considerations"]:
-        lines.append("-" * 70)
-        lines.append("💚 SUPPLEMENT CONSIDERATIONS")
-        lines.append("-" * 70)
-        for item in agent_summary["supplement_considerations"]:
-            lines.append(f"\n  {item['gene']}:")
-            for rec in item["recommendations"]:
-                lines.append(f"    • {rec}")
+    # Pharmacogenomics
+    if agent_summary.get("pharmacogenomics_alerts"):
+        lines.append("-" * 78)
+        lines.append("PHARMACOGENOMICS (Drug Response)")
+        lines.append("-" * 78)
+        for item in agent_summary["pharmacogenomics_alerts"][:15]:
+            lines.append(f"  {item.get('gene')}: {item.get('genotype')} - {item.get('action_type', '')}")
         lines.append("")
     
-    # Lifestyle
-    if agent_summary["lifestyle_recommendations"]:
-        lines.append("-" * 70)
-        lines.append("🏃 LIFESTYLE RECOMMENDATIONS")
-        lines.append("-" * 70)
-        for item in agent_summary["lifestyle_recommendations"][:10]:
-            lines.append(f"  • {item['gene']}: {item['recommendations'][0] if item['recommendations'] else 'See details'}")
+    # Polygenic Risk Scores
+    prs = all_results.get("prs", {})
+    if prs and not prs.get("error"):
+        lines.append("-" * 78)
+        lines.append("POLYGENIC RISK SCORES")
+        lines.append("-" * 78)
+        for condition, scores in prs.items():
+            if scores.get("percentile_estimate"):
+                lines.append(f"  {condition}: {scores['percentile_estimate']}th percentile "
+                           f"(confidence: {scores['confidence']})")
         lines.append("")
     
-    lines.append("=" * 70)
+    # Traits
+    if agent_summary.get("notable_traits"):
+        lines.append("-" * 78)
+        lines.append("NOTABLE TRAITS")
+        lines.append("-" * 78)
+        for trait in agent_summary["notable_traits"][:15]:
+            interp = trait.get("interpretation", "")
+            if isinstance(interp, dict):
+                interp = interp.get(trait.get("genotype"), str(interp))
+            lines.append(f"  {trait.get('trait')}: {interp[:60]}...")
+        lines.append("")
+    
+    lines.append("=" * 78)
     lines.append("END OF REPORT")
-    lines.append("=" * 70)
+    lines.append("=" * 78)
     
     return "\n".join(lines)
 
 
+# =============================================================================
+# MAIN
+# =============================================================================
+
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python comprehensive_analysis.py <dna_file>")
+        print("Personal Genomics Analysis Tool")
+        print("=" * 40)
+        print("\nUsage: python comprehensive_analysis.py <dna_file>")
         print("\nSupported formats:")
+        print("  - 23andMe (v3, v4, v5)")
         print("  - AncestryDNA")
-        print("  - 23andMe")
         print("  - MyHeritage")
-        print("  - FTDNA")
+        print("  - FamilyTreeDNA")
+        print("  - VCF (whole genome/exome)")
         print("  - Any tab-delimited rsid format")
+        print(f"\nMarker modules loaded: {MODULES_LOADED}")
+        if MODULES_LOADED:
+            total = (len(PHARMACOGENOMICS_MARKERS) + len(CARRIER_MARKERS) + 
+                    len(HEALTH_RISK_MARKERS) + len(TRAIT_MARKERS) +
+                    len(NUTRITION_MARKERS) + len(FITNESS_MARKERS) +
+                    len(NEURO_MARKERS) + len(LONGEVITY_MARKERS) + 
+                    len(IMMUNITY_MARKERS) + len(PRS_WEIGHTS))
+            print(f"Total markers in database: {total:,}")
         sys.exit(1)
     
     filepath = sys.argv[1]
     print(f"Loading {filepath}...")
-    df = load_dna_file(filepath)
-    print(f"Loaded {len(df):,} SNPs")
     
-    print("Running comprehensive analysis...")
-    health_results = analyze_health_markers(df)
+    genotypes, fmt = load_dna_file(filepath)
+    print(f"Loaded {len(genotypes):,} SNPs")
     
-    print("Generating agent-friendly summary...")
-    agent_summary = generate_agent_summary(health_results)
+    # Run all analyses
+    all_results = {
+        "total_snps": len(genotypes),
+        "format": fmt,
+        "apoe": determine_apoe(genotypes)
+    }
     
-    # Save JSON outputs
-    with open(OUTPUT_DIR / "health_analysis.json", 'w') as f:
-        json.dump(health_results, f, indent=2, default=str)
+    print("Analyzing markers...")
+    
+    if MODULES_LOADED:
+        all_results["pharmacogenomics"] = analyze_markers(genotypes, PHARMACOGENOMICS_MARKERS, "pharmacogenomics")
+        all_results["carrier_status"] = analyze_markers(genotypes, CARRIER_MARKERS, "carrier_status")
+        all_results["health_risks"] = analyze_markers(genotypes, HEALTH_RISK_MARKERS, "health_risks")
+        all_results["traits"] = analyze_markers(genotypes, TRAIT_MARKERS, "traits")
+        all_results["nutrition"] = analyze_markers(genotypes, NUTRITION_MARKERS, "nutrition")
+        all_results["fitness"] = analyze_markers(genotypes, FITNESS_MARKERS, "fitness")
+        all_results["neurogenetics"] = analyze_markers(genotypes, NEURO_MARKERS, "neurogenetics")
+        all_results["longevity"] = analyze_markers(genotypes, LONGEVITY_MARKERS, "longevity")
+        all_results["immunity"] = analyze_markers(genotypes, IMMUNITY_MARKERS, "immunity")
+        all_results["prs"] = calculate_all_prs(genotypes)
+    
+    # Generate outputs
+    print("Generating reports...")
+    
+    agent_summary = generate_agent_summary(all_results)
+    report = generate_report(all_results, agent_summary)
+    
+    # Save files
+    with open(OUTPUT_DIR / "full_analysis.json", 'w') as f:
+        json.dump(all_results, f, indent=2, default=str)
     
     with open(OUTPUT_DIR / "agent_summary.json", 'w') as f:
         json.dump(agent_summary, f, indent=2, default=str)
     
-    # Generate human report
-    report = generate_report(health_results, agent_summary)
-    
-    with open(OUTPUT_DIR / "comprehensive_report.md", 'w') as f:
+    with open(OUTPUT_DIR / "report.txt", 'w') as f:
         f.write(report)
     
-    print(report)
-    print(f"\n✓ Reports saved to {OUTPUT_DIR}/")
-    print(f"\n📊 Agent Summary: {OUTPUT_DIR}/agent_summary.json")
-    print("   - high_priority_alerts: Immediate attention needed")
-    print("   - medication_alerts: Drug interaction warnings")
-    print("   - supplement_considerations: Evidence-based supplements")
-    print("   - lifestyle_recommendations: Behavior modifications")
+    # Print report
+    print("\n" + report)
+    
+    print(f"\nOutput files saved to: {OUTPUT_DIR}/")
+    print(f"  - full_analysis.json    (complete data)")
+    print(f"  - agent_summary.json    (AI-optimized)")
+    print(f"  - report.txt            (human-readable)")
 
 
 if __name__ == "__main__":
