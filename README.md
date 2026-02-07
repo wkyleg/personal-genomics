@@ -1,15 +1,16 @@
-# Personal Genomics v4.0
+# Personal Genomics v4.1.0
 
-Privacy-first local DNA analysis for AI agents. Comprehensive genetic analysis with **1450+ validated markers** across **21 categories** covering pharmacogenomics, disease risk, carrier status, haplogroups, ancestry, hereditary cancer, autoimmune conditions, pain sensitivity, and lifestyle factors.
+Privacy-first local DNA analysis for AI agents. Comprehensive genetic analysis with **1600+ validated markers** across **30 categories** covering pharmacogenomics, disease risk, carrier status, haplogroups, ancestry, hereditary cancer, autoimmune conditions, pain sensitivity, lifestyle optimization, and more.
 
 ![Logo](logo.svg)
 
 ## Features
 
 ### Core Analysis
-- **1450+ validated genetic markers** across 21 categories
+- **1600+ validated genetic markers** across 30 categories
 - **Polygenic Risk Scores (PRS)** for 10+ major conditions with population calibration
 - **Pharmacogenomics** with CPIC Level 1A drug-gene interactions
+- **Medication Interaction Checker** - cross-reference any medication list
 - **Carrier screening** for 35+ recessive diseases including rare diseases
 - **VCF support** for whole genome/exome sequencing
 - **Agent-friendly JSON output** with priority-sorted actionable items
@@ -68,6 +69,80 @@ Privacy-first local DNA analysis for AI agents. Comprehensive genetic analysis w
 - Apple Health compatible format
 - API-ready JSON structure
 - Integration hooks for health trackers
+
+### New in v4.1.0
+
+💊 **Medication Interaction Checker**
+- Input any list of medications (generic or brand names)
+- Cross-references with pharmacogenomics profile
+- Critical, serious, moderate, and minor severity levels
+- Dosing adjustments and alternative medication suggestions
+- PubMed citations for each interaction
+- FDA warning flags
+
+🌙 **Sleep Optimization Profile**
+- Chronotype determination (CLOCK, PER2, PER3 genes)
+- Caffeine metabolism speed (CYP1A2)
+- Adenosine receptor sensitivity (ADORA2A)
+- Personalized wake/sleep time recommendations
+- Coffee cutoff time based on genetics
+- Short sleeper gene detection
+
+🥗 **Dietary Interaction Matrix**
+- Caffeine tolerance (CYP1A2)
+- Alcohol metabolism (ADH1B, ALDH2 - flush detection)
+- Saturated fat response (APOE-specific recommendations)
+- Lactose tolerance (LCT)
+- Celiac disease risk (HLA-DQ2/DQ8)
+- Bitter taste perception (TAS2R38)
+- Omega-3 conversion efficiency (FADS1)
+- Iron overload risk (HFE)
+
+🏃 **Athletic Performance Profiling**
+- Endurance vs power composite score
+- Key markers: ACTN3, ACE, PPARGC1A
+- Recovery profile (TNF, IL6, BDNF)
+- Injury susceptibility (COL5A1, COL1A1, GDF5)
+- VO2max potential indicators
+- Sport suitability recommendations
+- Personalized training guidance
+
+☀️ **UV Sensitivity Calculator**
+- Estimated Fitzpatrick skin type from genetics
+- MC1R, SLC24A5, SLC45A2, IRF4, TYR markers
+- SPF recommendations by skin type
+- Melanoma risk assessment
+- Vitamin D synthesis capacity
+- Sun exposure guidelines
+
+📝 **Natural Language Explanations**
+- Plain-English interpretation of all findings
+- Jargon-free explanations
+- Calibrated uncertainty language
+- Practical implications for each finding
+- Context for relative risks
+
+🔬 **Research Variant Flagging**
+- Clear separation of "established" vs "emerging" findings
+- Evidence level classification for each marker
+- Research context for preliminary findings
+- Appropriate uncertainty communication
+
+📚 **PubMed References**
+- Direct links to source papers for major findings
+- Primary citations for CPIC guidelines
+- PMID references throughout
+
+🧬 **Runs of Homozygosity Detection**
+- Heterozygosity rate calculation
+- Sensitive handling of consanguinity findings
+- Genetic counselor referral recommendations
+
+⏳ **Telomere Length Estimation**
+- TERT, TERC, OBFC1 variants
+- Longevity-associated markers (FOXO3, APOE)
+- Clear caveats about limitations
+- Lifestyle factor context
 
 ## Supported Formats
 

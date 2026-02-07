@@ -1,5 +1,5 @@
 """
-Personal Genomics Marker Database v4.0
+Personal Genomics Marker Database v4.1.0
 Comprehensive collection of validated genetic markers from:
 - PharmGKB (pharmacogenomics)
 - ClinVar (clinical variants)
@@ -29,11 +29,22 @@ Categories:
 14. Dermatology - Skin and hair
 15. Vision & Hearing - Sensory genetics
 16. Fertility - Reproductive health
-17. Haplogroups - Maternal/paternal lineage (NEW v4.0)
-18. Ancestry Composition - Population admixture (NEW v4.0)
-19. Cancer Panel - Hereditary cancer markers (NEW v4.0)
-20. Autoimmune HLA - HLA disease associations (NEW v4.0)
-21. Pain Sensitivity - Pain perception/opioid response (NEW v4.0)
+17. Haplogroups - Maternal/paternal lineage (v4.0)
+18. Ancestry Composition - Population admixture (v4.0)
+19. Cancer Panel - Hereditary cancer markers (v4.0)
+20. Autoimmune HLA - HLA disease associations (v4.0)
+21. Pain Sensitivity - Pain perception/opioid response (v4.0)
+
+NEW in v4.1.0:
+22. Medication Interactions - Drug-gene interaction checker
+23. Sleep Optimization - Chronotype/caffeine/sleep profiling
+24. Dietary Interactions - Food-gene interaction matrix
+25. Athletic Profile - Endurance/power/recovery analysis
+26. UV Sensitivity - Skin type/SPF/melanoma risk
+27. Natural Language Explanations - Plain-English interpretations
+28. Research Variant Flagging - Emerging vs established findings
+29. Telomere/Longevity - Telomere length estimation
+30. Runs of Homozygosity - Homozygosity analysis
 """
 
 from .pharmacogenomics import PHARMACOGENOMICS_MARKERS, DRUG_INTERACTIONS
@@ -84,6 +95,56 @@ from .pain_sensitivity import (
     PAIN_SENSITIVITY_MARKERS, analyze_pain_sensitivity
 )
 
+# NEW v4.1.0 modules
+from .medication_interactions import (
+    DRUG_DATABASE, GENE_DRUG_INTERACTIONS,
+    check_medication_interactions, normalize_drug_name,
+    get_drug_info, list_all_drugs, search_drugs,
+    InteractionSeverity
+)
+from .sleep_optimization import (
+    CHRONOTYPE_MARKERS, CAFFEINE_METABOLISM_MARKERS,
+    ADENOSINE_RECEPTOR_MARKERS, SLEEP_DURATION_MARKERS, SLEEP_MARKERS,
+    determine_chronotype, determine_caffeine_metabolism,
+    generate_sleep_profile, get_sleep_optimization_summary,
+    Chronotype, CaffeineMetabolism
+)
+from .dietary_interactions import (
+    DIETARY_MARKERS, CAFFEINE_DIET_MARKERS, ALCOHOL_DIET_MARKERS,
+    SATURATED_FAT_MARKERS, LACTOSE_MARKERS, GLUTEN_SENSITIVITY_MARKERS,
+    BITTER_TASTE_MARKERS, ADDITIONAL_DIET_MARKERS,
+    analyze_dietary_interactions, determine_apoe_diet_recommendations,
+    generate_dietary_matrix_report, get_food_specific_guidance,
+    ToleranceLevel
+)
+from .athletic_profile import (
+    POWER_ENDURANCE_MARKERS, VO2MAX_MARKERS, RECOVERY_MARKERS, INJURY_MARKERS,
+    calculate_athletic_profile, generate_training_recommendations,
+    generate_athletic_report, get_sport_suitability,
+    AthleticType, RecoveryProfile, InjuryRisk
+)
+from .uv_sensitivity import (
+    MC1R_MARKERS, PIGMENTATION_MARKERS, VITAMIN_D_MARKERS,
+    calculate_pigmentation_score, estimate_skin_type,
+    calculate_spf_recommendation, calculate_vitamin_d_synthesis,
+    calculate_melanoma_risk, generate_uv_sensitivity_report,
+    generate_uv_report_text, SkinType, MelanomaRisk
+)
+from .explanations import (
+    PUBMED_REFERENCES, RESEARCH_VARIANTS, EXPLANATION_TEMPLATES,
+    generate_plain_english_explanation, explain_risk_in_context,
+    generate_uncertainty_statement, flag_research_variants,
+    get_pubmed_links, generate_full_explanation_report,
+    EvidenceLevel, CertaintyLevel
+)
+from .advanced_genetics import (
+    TELOMERE_MARKERS, LONGEVITY_RELATED_MARKERS,
+    calculate_heterozygosity_rate, detect_roh_regions,
+    generate_roh_report, estimate_telomere_length,
+    estimate_longevity_associations, generate_telomere_report,
+    ROHLevel
+)
+
 # Merge extended markers into main dictionaries
 def _merge_markers():
     """Merge extended markers into main dictionaries."""
@@ -112,6 +173,25 @@ ALL_PHARMACOGENOMICS, ALL_HEALTH_RISKS, ALL_TRAITS, ALL_PRS, ALL_CARRIER, ALL_AN
 # Combined marker count
 def get_marker_counts():
     """Get counts of markers in each category."""
+    # v4.1.0 marker counts
+    v41_sleep = len(SLEEP_MARKERS)
+    v41_dietary = len(DIETARY_MARKERS)
+    v41_athletic = len(POWER_ENDURANCE_MARKERS) + len(RECOVERY_MARKERS) + len(INJURY_MARKERS) + len(VO2MAX_MARKERS)
+    v41_uv = len(PIGMENTATION_MARKERS)
+    v41_telomere = len(TELOMERE_MARKERS) + len(LONGEVITY_RELATED_MARKERS)
+    
+    base_total = (len(ALL_PHARMACOGENOMICS) + len(ALL_PRS) + len(ALL_CARRIER) +
+                 len(ALL_HEALTH_RISKS) + len(ALL_TRAITS) + len(NUTRITION_MARKERS) +
+                 len(FITNESS_MARKERS) + len(NEURO_MARKERS) + len(LONGEVITY_MARKERS) +
+                 len(IMMUNITY_MARKERS) + len(ALL_ANCESTRY) +
+                 len(MENTAL_HEALTH_MARKERS) + len(DERMATOLOGY_MARKERS) +
+                 len(VISION_HEARING_MARKERS) + len(FERTILITY_MARKERS) +
+                 len(PAIN_SENSITIVITY_MARKERS))
+    
+    # Note: Many v4.1 markers overlap with existing categories
+    # Only count truly new unique markers
+    new_markers = v41_sleep + v41_athletic + v41_uv + v41_telomere
+    
     return {
         "pharmacogenomics": len(ALL_PHARMACOGENOMICS),
         "prs_weights": len(ALL_PRS),
@@ -129,19 +209,20 @@ def get_marker_counts():
         "dermatology": len(DERMATOLOGY_MARKERS),
         "vision_hearing": len(VISION_HEARING_MARKERS),
         "fertility": len(FERTILITY_MARKERS),
-        # New v4.0 categories
+        # v4.0 categories
         "haplogroups": len(MTDNA_MARKERS) + len(YCHROMOSOME_MARKERS),
         "ancestry_aims": len(ANCESTRY_INFORMATIVE_MARKERS),
         "hereditary_cancer": len(HEREDITARY_CANCER_MARKERS),
         "autoimmune_hla": len(AUTOIMMUNE_HLA_MARKERS),
         "pain_sensitivity": len(PAIN_SENSITIVITY_MARKERS),
-        "total": (len(ALL_PHARMACOGENOMICS) + len(ALL_PRS) + len(ALL_CARRIER) +
-                 len(ALL_HEALTH_RISKS) + len(ALL_TRAITS) + len(NUTRITION_MARKERS) +
-                 len(FITNESS_MARKERS) + len(NEURO_MARKERS) + len(LONGEVITY_MARKERS) +
-                 len(IMMUNITY_MARKERS) + len(ALL_ANCESTRY) +
-                 len(MENTAL_HEALTH_MARKERS) + len(DERMATOLOGY_MARKERS) +
-                 len(VISION_HEARING_MARKERS) + len(FERTILITY_MARKERS) +
-                 len(PAIN_SENSITIVITY_MARKERS))
+        # NEW v4.1.0 categories
+        "sleep_markers": v41_sleep,
+        "dietary_markers": v41_dietary,
+        "athletic_markers": v41_athletic,
+        "uv_sensitivity": v41_uv,
+        "telomere_longevity": v41_telomere,
+        "medication_interactions": len(GENE_DRUG_INTERACTIONS),
+        "total": base_total + new_markers
     }
 
 __all__ = [
@@ -246,5 +327,94 @@ __all__ = [
     'analyze_pain_sensitivity',
     
     # Utility
-    'get_marker_counts'
+    'get_marker_counts',
+    
+    # NEW v4.1.0 - Medication Interactions
+    'DRUG_DATABASE',
+    'GENE_DRUG_INTERACTIONS',
+    'check_medication_interactions',
+    'normalize_drug_name',
+    'get_drug_info',
+    'list_all_drugs',
+    'search_drugs',
+    'InteractionSeverity',
+    
+    # NEW v4.1.0 - Sleep Optimization
+    'CHRONOTYPE_MARKERS',
+    'CAFFEINE_METABOLISM_MARKERS',
+    'ADENOSINE_RECEPTOR_MARKERS',
+    'SLEEP_DURATION_MARKERS',
+    'SLEEP_MARKERS',
+    'determine_chronotype',
+    'determine_caffeine_metabolism',
+    'generate_sleep_profile',
+    'get_sleep_optimization_summary',
+    'Chronotype',
+    'CaffeineMetabolism',
+    
+    # NEW v4.1.0 - Dietary Interactions
+    'DIETARY_MARKERS',
+    'CAFFEINE_DIET_MARKERS',
+    'ALCOHOL_DIET_MARKERS',
+    'SATURATED_FAT_MARKERS',
+    'LACTOSE_MARKERS',
+    'GLUTEN_SENSITIVITY_MARKERS',
+    'BITTER_TASTE_MARKERS',
+    'ADDITIONAL_DIET_MARKERS',
+    'analyze_dietary_interactions',
+    'determine_apoe_diet_recommendations',
+    'generate_dietary_matrix_report',
+    'get_food_specific_guidance',
+    'ToleranceLevel',
+    
+    # NEW v4.1.0 - Athletic Profile
+    'POWER_ENDURANCE_MARKERS',
+    'VO2MAX_MARKERS',
+    'RECOVERY_MARKERS',
+    'INJURY_MARKERS',
+    'calculate_athletic_profile',
+    'generate_training_recommendations',
+    'generate_athletic_report',
+    'get_sport_suitability',
+    'AthleticType',
+    'RecoveryProfile',
+    'InjuryRisk',
+    
+    # NEW v4.1.0 - UV Sensitivity
+    'MC1R_MARKERS',
+    'PIGMENTATION_MARKERS',
+    'VITAMIN_D_MARKERS',
+    'calculate_pigmentation_score',
+    'estimate_skin_type',
+    'calculate_spf_recommendation',
+    'calculate_vitamin_d_synthesis',
+    'calculate_melanoma_risk',
+    'generate_uv_sensitivity_report',
+    'generate_uv_report_text',
+    'SkinType',
+    'MelanomaRisk',
+    
+    # NEW v4.1.0 - Explanations & Research Variants
+    'PUBMED_REFERENCES',
+    'RESEARCH_VARIANTS',
+    'EXPLANATION_TEMPLATES',
+    'generate_plain_english_explanation',
+    'explain_risk_in_context',
+    'generate_uncertainty_statement',
+    'flag_research_variants',
+    'get_pubmed_links',
+    'generate_full_explanation_report',
+    'EvidenceLevel',
+    'CertaintyLevel',
+    
+    # NEW v4.1.0 - Advanced Genetics (ROH, Telomeres)
+    'TELOMERE_MARKERS',
+    'LONGEVITY_RELATED_MARKERS',
+    'calculate_heterozygosity_rate',
+    'detect_roh_regions',
+    'generate_roh_report',
+    'estimate_telomere_length',
+    'estimate_longevity_associations',
+    'generate_telomere_report',
+    'ROHLevel'
 ]

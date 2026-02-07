@@ -1,6 +1,6 @@
-# Personal Genomics Skill v4.0
+# Personal Genomics Skill v4.1.0
 
-Comprehensive local DNA analysis with **1450+ markers** across **21 categories**. Privacy-first genetic analysis for AI agents.
+Comprehensive local DNA analysis with **1600+ markers** across **30 categories**. Privacy-first genetic analysis for AI agents.
 
 ## Quick Start
 
@@ -14,6 +14,7 @@ Activate this skill when user mentions:
 - DNA analysis, genetic analysis, genome analysis
 - 23andMe, AncestryDNA, MyHeritage results
 - Pharmacogenomics, drug-gene interactions
+- Medication interactions, drug safety
 - Genetic risk, disease risk, health risk
 - Carrier status, carrier testing
 - VCF file analysis
@@ -24,6 +25,11 @@ Activate this skill when user mentions:
 - Hereditary cancer, Lynch syndrome
 - Autoimmune genetics, HLA, celiac
 - Pain sensitivity, opioid response
+- Sleep optimization, chronotype, caffeine metabolism
+- Dietary genetics, lactose intolerance, celiac
+- Athletic genetics, sports performance
+- UV sensitivity, skin type, melanoma risk
+- Telomere length, longevity genetics
 
 ## Supported Files
 
@@ -78,6 +84,90 @@ Activate this skill when user mentions:
 - Executive summary
 - Detailed findings
 - Disclaimers included
+
+## New v4.1.0 Features
+
+### Medication Interaction Checker
+```python
+from markers.medication_interactions import check_medication_interactions
+
+result = check_medication_interactions(
+    medications=["warfarin", "clopidogrel", "omeprazole"],
+    genotypes=user_genotypes
+)
+# Returns critical/serious/moderate interactions with alternatives
+```
+- Accepts brand or generic names
+- CPIC guidelines integrated
+- PubMed citations included
+- FDA warning flags
+
+### Sleep Optimization Profile
+```python
+from markers.sleep_optimization import generate_sleep_profile
+
+profile = generate_sleep_profile(genotypes)
+# Returns ideal wake/sleep times, coffee cutoff, etc.
+```
+- Chronotype (morning/evening preference)
+- Caffeine metabolism speed
+- Personalized timing recommendations
+
+### Dietary Interaction Matrix
+```python
+from markers.dietary_interactions import analyze_dietary_interactions
+
+diet = analyze_dietary_interactions(genotypes)
+# Returns food-specific guidance
+```
+- Caffeine, alcohol, saturated fat, lactose, gluten
+- APOE-specific diet recommendations
+- Bitter taste perception
+
+### Athletic Performance Profile
+```python
+from markers.athletic_profile import calculate_athletic_profile
+
+profile = calculate_athletic_profile(genotypes)
+# Returns power/endurance type, recovery profile, injury risk
+```
+- Sport suitability scoring
+- Training recommendations
+- Injury prevention guidance
+
+### UV Sensitivity Calculator
+```python
+from markers.uv_sensitivity import generate_uv_sensitivity_report
+
+uv = generate_uv_sensitivity_report(genotypes)
+# Returns skin type, SPF recommendation, melanoma risk
+```
+- Fitzpatrick skin type estimation
+- Vitamin D synthesis capacity
+- Melanoma risk factors
+
+### Natural Language Explanations
+```python
+from markers.explanations import generate_plain_english_explanation
+
+explanation = generate_plain_english_explanation(
+    rsid="rs3892097", gene="CYP2D6", genotype="GA",
+    trait="Drug metabolism", finding="Poor metabolizer carrier"
+)
+```
+- Plain-English summaries
+- Research variant flagging
+- PubMed links
+
+### Telomere & Longevity
+```python
+from markers.advanced_genetics import estimate_telomere_length
+
+telomere = estimate_telomere_length(genotypes)
+# Returns relative estimate with appropriate caveats
+```
+- TERT, TERC, OBFC1 variants
+- Longevity associations (FOXO3, APOE)
 
 ### Data Quality
 - Call rate analysis

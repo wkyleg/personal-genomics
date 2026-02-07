@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive Genetic Analysis - 3500+ Markers (v3.0)
+Comprehensive Genetic Analysis - 1600+ Markers (v4.1.0)
 Full health, pharmacogenomics, ancestry, traits, and actionable recommendations.
 Works with ANY ancestry/ethnic background worldwide.
 
