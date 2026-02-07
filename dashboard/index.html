@@ -1250,6 +1250,356 @@
             margin-bottom: 0.25rem;
         }
         
+        /* ========================================
+           Ancient Matches Styles
+           ======================================== */
+        .open-source-badge {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+            border: 1px solid var(--success);
+            border-radius: var(--radius);
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            color: var(--success);
+        }
+        
+        .open-source-badge span {
+            font-size: 1.5rem;
+        }
+        
+        .ancient-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1.5rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .ancient-section-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .export-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .export-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+        
+        .ancient-matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+        
+        .ancient-match-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            border-left: 4px solid var(--accent-primary);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .ancient-match-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .ancient-match-rank {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+        
+        .ancient-match-rank .rank-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            line-height: 1;
+        }
+        
+        .ancient-match-similarity {
+            text-align: right;
+        }
+        
+        .ancient-match-similarity .percent {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .ancient-match-similarity .label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        
+        .ancient-match-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .ancient-match-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .ancient-match-culture {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: var(--bg-primary);
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+        
+        .ancient-match-description {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            margin-bottom: 0.75rem;
+        }
+        
+        .ancient-match-traits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .trait-tag {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--accent-primary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+        
+        .trait-tag.match {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        
+        .ancient-match-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .culture-affinities {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .culture-affinity-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .culture-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .culture-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .culture-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .culture-bar-container {
+            flex: 2;
+            height: 24px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .culture-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding-left: 0.5rem;
+        }
+        
+        .culture-bar-fill span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .visual-timeline {
+            position: relative;
+            padding: 1rem 0 1rem 60px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            margin-top: 1rem;
+        }
+        
+        .timeline-axis {
+            position: absolute;
+            left: 50px;
+            top: 1rem;
+            bottom: 1rem;
+            width: 3px;
+            background: linear-gradient(to bottom, #f59e0b, #3b82f6, #8b5cf6);
+            border-radius: 2px;
+        }
+        
+        .timeline-entry {
+            position: relative;
+            padding: 0.75rem 0 0.75rem 1.5rem;
+            margin-left: 10px;
+        }
+        
+        .timeline-entry::before {
+            content: '';
+            position: absolute;
+            left: -13px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            border: 2px solid var(--bg-secondary);
+        }
+        
+        .timeline-date {
+            position: absolute;
+            left: -55px;
+            width: 45px;
+            text-align: right;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .timeline-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .timeline-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .timeline-culture {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .timeline-similarity {
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+        
+        .famous-ancients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .famous-ancient-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .famous-ancient-emoji {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .famous-ancient-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .famous-ancient-period {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .famous-ancient-similarity {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+        
+        .methodology-note {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin-top: 1.5rem;
+        }
+        
+        .methodology-note h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .methodology-note p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        
+        .methodology-note ul {
+            margin: 0.5rem 0;
+            padding-left: 0;
+            list-style: none;
+        }
+        
+        .methodology-note li {
+            font-size: 0.85rem;
+            margin-bottom: 0.35rem;
+            padding-left: 0;
+        }
+        
         .haplogroup-card {
             background: var(--bg-secondary);
             border-radius: 8px;
@@ -1801,6 +2151,7 @@
                 <a href="#health-risks" class="nav-link">📊 Health Risks</a>
                 <a href="#traits" class="nav-link">🧬 Traits</a>
                 <a href="#population-comparison" class="nav-link">🌍 Population Comparison</a>
+                <a href="#ancient-matches" class="nav-link">⚔️ Ancient Matches</a>
                 <a href="#ancient-dna" class="nav-link">🏛️ Ancient DNA</a>
                 <a href="#carrier" class="nav-link">🧪 Carrier Status</a>
                 <a href="#sleep" class="nav-link">😴 Sleep</a>
@@ -2231,6 +2582,7 @@
             renderPRS();
             renderTraits();
             renderPopulationComparison();
+            renderAncientMatches();
             renderAncestry();
             renderCarrier();
             renderSleep();
@@ -2750,6 +3102,238 @@
                     card.style.display = 'none';
                 }
             });
+        }
+        
+        // ========================================
+        // Ancient Matches Section (YourTrueAncestry Alternative)
+        // ========================================
+        function renderAncientMatches() {
+            const ancientMatches = data.ancient_matches || {};
+            const matches = ancientMatches.matches || [];
+            const cultureAffinities = ancientMatches.culture_affinities || [];
+            const timeline = ancientMatches.timeline || [];
+            
+            // Render top matches grid
+            renderMatchesGrid(matches.slice(0, 12));
+            
+            // Render culture affinities
+            renderCultureAffinities(cultureAffinities.slice(0, 10));
+            
+            // Render visual timeline
+            renderVisualTimeline(timeline);
+            
+            // Render famous ancients
+            renderFamousAncients(matches);
+        }
+        
+        function renderMatchesGrid(matches) {
+            const container = document.getElementById('ancient-matches-grid');
+            if (!container || matches.length === 0) {
+                if (container) {
+                    container.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1;">No ancient matches data available. Run ancient DNA analysis to see your matches.</p>';
+                }
+                return;
+            }
+            
+            const periodClass = {
+                'Mesolithic': 'mesolithic',
+                'Neolithic': 'neolithic',
+                'Chalcolithic': 'bronze-age',
+                'Bronze Age': 'bronze-age',
+                'Iron Age': 'iron-age',
+                'Roman': 'roman',
+                'Early Medieval': 'medieval'
+            };
+            
+            let html = '';
+            matches.forEach((match, i) => {
+                const rank = i + 1;
+                const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+                const pClass = periodClass[match.period] || '';
+                
+                html += `
+                    <div class="ancient-card ${pClass}">
+                        <div class="match-rank ${rankClass}">#${rank}</div>
+                        <h3>${escapeHtml(match.name)}</h3>
+                        
+                        <div class="match-distance">
+                            <span class="similarity-value">${match.similarity?.toFixed(1) || '?'}</span>
+                            <div class="distance-bar-container">
+                                <div class="distance-bar" style="width: ${match.similarity || 0}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="match-period">
+                            <span class="period-badge">${escapeHtml(match.period)}</span>
+                            ${escapeHtml(match.age_text || '')}
+                        </div>
+                        
+                        <div class="match-location">
+                            📍 ${escapeHtml(match.site || '')}, ${escapeHtml(match.country || '')}
+                        </div>
+                        
+                        <div class="match-description">
+                            ${escapeHtml((match.description || '').substring(0, 150))}${(match.description || '').length > 150 ? '...' : ''}
+                        </div>
+                        
+                        ${(match.shared_traits || []).length > 0 ? `
+                            <div class="shared-traits">
+                                ${match.shared_traits.slice(0, 3).map(t => `<span class="trait match">${escapeHtml(t)}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 0.75rem; font-size: 0.7rem; color: var(--text-secondary);">
+                            ${match.shared_snps || 0} shared SNPs
+                            ${match.pmid ? ` · <a href="https://pubmed.ncbi.nlm.nih.gov/${match.pmid}/" target="_blank" rel="noopener" class="pmid-link">PMID:${match.pmid}</a>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function renderCultureAffinities(affinities) {
+            const container = document.getElementById('culture-affinities');
+            if (!container || affinities.length === 0) {
+                if (container) container.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            affinities.forEach(aff => {
+                const color = aff.map_color || 'var(--accent-primary)';
+                
+                html += `
+                    <div class="culture-bar-container">
+                        <div class="culture-bar-header">
+                            <div class="culture-name">
+                                ${escapeHtml(aff.name)}
+                                <span class="culture-period">${escapeHtml(aff.period || '')}</span>
+                            </div>
+                            <div class="culture-affinity-value">${aff.affinity?.toFixed(1) || 0}%</div>
+                        </div>
+                        <div class="culture-bar-track">
+                            <div class="culture-bar-fill" style="width: ${aff.affinity || 0}%; background: ${color};">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function renderVisualTimeline(timeline) {
+            const container = document.getElementById('visual-timeline');
+            if (!container || timeline.length === 0) {
+                if (container) container.innerHTML = '';
+                return;
+            }
+            
+            // Create visual timeline
+            const minYear = -10000;
+            const maxYear = 1100;
+            const range = maxYear - minYear;
+            
+            let markersHtml = '';
+            timeline.slice(0, 10).forEach(item => {
+                const position = ((item.year - minYear) / range) * 100;
+                markersHtml += `
+                    <div class="timeline-marker" style="left: ${position}%;" title="${escapeHtml(item.name)}: ${escapeHtml(item.year_display)}">
+                        <div class="timeline-marker-dot"></div>
+                        <div class="timeline-marker-label">${escapeHtml(item.name.split(' ')[0])}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = `
+                <div class="timeline-axis">
+                    <span>10000 BCE</span>
+                    <span>5000 BCE</span>
+                    <span>1 CE</span>
+                    <span>1000 CE</span>
+                </div>
+                <div class="timeline-track">
+                    ${markersHtml}
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 40px; padding: 0 1rem; font-size: 0.7rem; color: var(--text-secondary);">
+                    <span style="color: #2E86AB;">Mesolithic</span>
+                    <span style="color: #F18F01;">Neolithic</span>
+                    <span style="color: #CD7F32;">Bronze Age</span>
+                    <span style="color: #4A7C59;">Iron Age</span>
+                    <span style="color: #DC143C;">Roman</span>
+                    <span style="color: #6247AA;">Medieval</span>
+                </div>
+            `;
+        }
+        
+        function renderFamousAncients(matches) {
+            const container = document.getElementById('famous-ancients-grid');
+            if (!container) return;
+            
+            // Famous individuals to highlight
+            const famous = [
+                { id: 'cheddar_man', icon: '💀', label: "Britain's oldest DNA" },
+                { id: 'otzi', icon: '🧊', label: "The Iceman" },
+                { id: 'amesbury_archer', icon: '🏹', label: "King of Stonehenge" },
+                { id: 'viking_denmark', icon: '⚔️', label: "Viking warrior" },
+                { id: 'loschbour', icon: '🏕️', label: "Hunter-gatherer" },
+                { id: 'yamnaya_samara', icon: '🐴', label: "Steppe pastoralist" }
+            ];
+            
+            let html = '';
+            famous.forEach(f => {
+                const match = matches.find(m => m.id === f.id);
+                if (match) {
+                    html += `
+                        <div class="famous-ancient-card">
+                            <div class="famous-ancient-icon">${f.icon}</div>
+                            <div class="famous-ancient-info">
+                                <h4>${escapeHtml(match.name)}</h4>
+                                <p>${f.label}</p>
+                                <p>${escapeHtml(match.age_text || '')}</p>
+                                <div class="famous-ancient-similarity">${match.similarity?.toFixed(1) || '?'}% similar</div>
+                                ${(match.shared_traits || []).length > 0 ? 
+                                    `<p style="font-size: 0.75rem; margin-top: 0.25rem;">Shared: ${escapeHtml(match.shared_traits[0])}</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            if (!html) {
+                html = '<p style="color: var(--text-secondary); grid-column: 1/-1;">Famous ancient comparisons will appear after analysis.</p>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function exportAncientData() {
+            const ancientMatches = data.ancient_matches || {};
+            const exportData = {
+                export_date: new Date().toISOString(),
+                methodology: ancientMatches.methodology || {},
+                matches: ancientMatches.matches || [],
+                culture_affinities: ancientMatches.culture_affinities || []
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ancient_dna_matches.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
         
         // ========================================

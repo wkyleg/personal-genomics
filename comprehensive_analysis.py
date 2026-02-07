@@ -172,6 +172,7 @@ try:
     from markers.ancestry_composition import get_ancestry_summary
     from markers.population_comparison import get_population_comparison_json
     from markers.ancient_ancestry import get_ancient_dna_json, get_neanderthal_report
+    from markers.ancient_matching import get_ancient_matches_json, analyze_ancient_ancestry
     from markers import get_marker_counts
     MODULES_LOADED = True
 except ImportError as e:
@@ -482,8 +483,15 @@ def load_consumer_format(filepath: Union[str, Path]) -> Dict[str, str]:
                     if not validate_rsid(rsid):
                         continue
 
-                    # Format: rsid, chrom, pos, genotype
-                    raw_genotype = parts[3].strip()
+                    # Format varies:
+                    # 4 columns: rsid, chrom, pos, genotype (23andMe)
+                    # 5 columns: rsid, chrom, pos, allele1, allele2 (Ancestry)
+                    if len(parts) >= 5:
+                        # Ancestry format: combine allele1 + allele2
+                        raw_genotype = parts[3].strip() + parts[4].strip()
+                    else:
+                        # 23andMe format: genotype in column 4
+                        raw_genotype = parts[3].strip()
                     genotype = sanitize_genotype(raw_genotype)
 
                     if genotype:
@@ -926,6 +934,16 @@ def generate_agent_summary(all_results: Dict[str, Any]) -> Dict[str, Any]:
     neanderthal = all_results.get("neanderthal", {})
     if neanderthal:
         summary["neanderthal"] = neanderthal
+    
+    # Add Ancient Individual Matches (YourTrueAncestry clone)
+    ancient_matches = all_results.get("ancient_matches", {})
+    if ancient_matches:
+        summary["ancient_matches"] = {
+            "top_matches": ancient_matches.get("top_matches", [])[:5],
+            "culture_affinities": ancient_matches.get("culture_affinities", [])[:8],
+            "statistics": ancient_matches.get("statistics", {}),
+            "methodology": ancient_matches.get("methodology", {})
+        }
 
     return summary
 
@@ -1398,6 +1416,13 @@ def analyze_dna_file(
         all_results["population_comparison"] = get_population_comparison_json(genotypes)
         all_results["ancient_dna"] = get_ancient_dna_json(genotypes)
         all_results["neanderthal"] = get_neanderthal_report(genotypes)
+        
+        # Ancient Individual Matching (YourTrueAncestry alternative)
+        try:
+            all_results["ancient_matches"] = get_ancient_matches_json(genotypes)
+        except Exception as e:
+            logger.warning(f"Could not run ancient DNA matching: {e}")
+            all_results["ancient_matches"] = {}
 
         # Advanced features
         all_results["lifestyle_recommendations"] = generate_lifestyle_recommendations(all_results)

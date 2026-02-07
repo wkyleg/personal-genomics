@@ -94,6 +94,11 @@ from .ancient_ancestry import (
     get_ancient_dna_json, detect_ancient_signals as detect_ancient_signals_v44,
     generate_ancient_dna_report, get_neanderthal_report
 )
+from .ancient_matching import (
+    find_closest_ancients, match_to_cultures,
+    generate_ancient_matches_report, get_ancient_matches_json,
+    analyze_ancient_ancestry, calculate_genetic_distance
+)
 from .cancer_panel import (
     BRCA1_MARKERS, BRCA2_MARKERS, LYNCH_SYNDROME_MARKERS, OTHER_CANCER_MARKERS,
     HEREDITARY_CANCER_MARKERS, CANCER_SCREENING_PANELS, analyze_cancer_panel
@@ -430,5 +435,11 @@ __all__ = [
     'estimate_telomere_length',
     'estimate_longevity_associations',
     'generate_telomere_report',
-    'ROHLevel'
+    'ROHLevel',
+    
+    # NEW v4.4.0 - Ancient DNA Matching (YourTrueAncestry Alternative)
+    'AncientDNAMatcher',
+    'AncientMatch',
+    'CultureAffinity',
+    'analyze_ancient_matches',
 ]

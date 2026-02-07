@@ -1,654 +1,654 @@
-#!/usr/bin/env python3
 """
-Ancient DNA Matching Engine
-==========================
+Ancient Individual Matching Module
 
-Compares user DNA to ancient individuals and cultures using Identity-by-State (IBS)
-similarity. Free, open source alternative to YourTrueAncestry.
+Free "YourTrueAncestry" clone - matches your DNA against published ancient genomes.
 
-Unlike proprietary services:
-- Full transparency — methodology is open and documented
-- Citations for everything — every ancient sample has PMID
-- Downloadable data — user can export raw comparisons
-- Educational — explains what each culture/period means
-- Free forever — no paywall
-- Open source — code is auditable
+This module provides:
+- Genetic distance calculation using IBS (Identity by State)
+- Matching against 30+ ancient individuals from published studies
+- Cultural affinity scoring
+- Detailed reports with historical context
 
-Author: OpenClaw Personal Genomics
-Version: 1.0.0
+Key principle: TRANSPARENCY. We show exactly how we calculate matches,
+provide PMIDs for every ancient sample, and explain limitations clearly.
+
+Sources:
+- Reich Lab publications
+- Allen Ancient DNA Resource (AADR)
+- Published ancient DNA studies with PMID citations
 """
 
-import json
+from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any
-from dataclasses import dataclass, asdict
 from collections import defaultdict
+import json
 import math
 
-# Paths
-REFERENCE_DIR = Path(__file__).parent.parent / "references"
-ANCIENT_INDIVIDUALS_FILE = REFERENCE_DIR / "ancient_individuals.json"
-ANCIENT_CULTURES_FILE = REFERENCE_DIR / "ancient_cultures.json"
+# =============================================================================
+# LOAD REFERENCE DATA
+# =============================================================================
 
-
-@dataclass
-class AncientMatch:
-    """Represents a match to an ancient individual."""
-    id: str
-    name: str
-    similarity: float  # 0-100% (100 = identical)
-    distance: float    # 0-1 (0 = identical)
-    shared_snps: int
-    total_snps: int
-    period: str
-    culture: str
-    site: str
-    country: str
-    age_text: str
-    description: str
-    lat: Optional[float] = None
-    lon: Optional[float] = None
-    mt_haplogroup: Optional[str] = None
-    y_haplogroup: Optional[str] = None
-    shared_traits: Optional[List[str]] = None
-    paper: Optional[str] = None
-    pmid: Optional[str] = None
+def load_ancient_individuals() -> Dict[str, Any]:
+    """Load the ancient individuals database."""
+    ref_path = Path(__file__).parent.parent / "references" / "ancient_individuals.json"
     
-    def to_dict(self) -> Dict:
-        return asdict(self)
+    if not ref_path.exists():
+        return {"_metadata": {}}
+    
+    with open(ref_path, 'r') as f:
+        return json.load(f)
 
 
-@dataclass 
-class CultureAffinity:
-    """Represents affinity to an ancient culture."""
-    id: str
-    name: str
-    affinity: float  # 0-100%
-    period: str
-    regions: List[str]
-    description: str
-    sample_count: int
-    avg_shared_snps: float
-    diagnostic_matches: Dict[str, str]
-    map_color: str
+def load_ancient_cultures() -> Dict[str, Any]:
+    """Load the ancient cultures database."""
+    ref_path = Path(__file__).parent.parent / "references" / "ancient_cultures.json"
+    
+    if not ref_path.exists():
+        return {"_metadata": {}}
+    
+    with open(ref_path, 'r') as f:
+        return json.load(f)
 
 
-@dataclass
-class TraitComparison:
-    """Comparison of specific traits between user and ancient."""
-    trait_name: str
-    rs_id: str
-    user_genotype: str
-    ancient_genotype: str
-    match: bool
-    trait_description: str
+# Cache the data
+_ANCIENT_INDIVIDUALS = None
+_ANCIENT_CULTURES = None
 
 
-class AncientDNAMatcher:
+def get_ancient_individuals() -> Dict[str, Any]:
+    """Get cached ancient individuals data."""
+    global _ANCIENT_INDIVIDUALS
+    if _ANCIENT_INDIVIDUALS is None:
+        _ANCIENT_INDIVIDUALS = load_ancient_individuals()
+    return _ANCIENT_INDIVIDUALS
+
+
+def get_ancient_cultures() -> Dict[str, Any]:
+    """Get cached ancient cultures data."""
+    global _ANCIENT_CULTURES
+    if _ANCIENT_CULTURES is None:
+        _ANCIENT_CULTURES = load_ancient_cultures()
+    return _ANCIENT_CULTURES
+
+
+# =============================================================================
+# GENETIC DISTANCE CALCULATION
+# =============================================================================
+
+def normalize_genotype(genotype: str) -> str:
+    """Normalize genotype to alphabetical order for comparison."""
+    if not genotype:
+        return ""
+    if len(genotype) == 2:
+        return "".join(sorted(genotype.upper()))
+    return genotype.upper()
+
+
+def calculate_genetic_distance(
+    user_genos: Dict[str, str],
+    ancient_genos: Dict[str, str],
+    weighted: bool = True
+) -> Optional[Dict[str, Any]]:
     """
-    Main class for ancient DNA matching.
+    Calculate genetic distance between user and ancient individual using IBS.
     
-    Methodology:
-    -----------
-    We use Identity-by-State (IBS) similarity, which counts shared alleles
-    between the user and ancient samples at common SNP positions.
-    
-    For each SNP position:
-    - If both have same homozygous genotype (e.g., AA vs AA): IBS = 2
-    - If one hetero matches one allele (e.g., AG vs AA): IBS = 1
-    - If both hetero (e.g., AG vs AG): IBS = 2
-    - If no alleles match (e.g., AA vs GG): IBS = 0
-    
-    Distance = 1 - (sum of IBS scores) / (2 * number of shared SNPs)
-    Similarity = 100 * (1 - distance)
-    """
-    
-    def __init__(self):
-        self.individuals = []
-        self.cultures = {}
-        self._load_reference_data()
-    
-    def _load_reference_data(self):
-        """Load ancient individual and culture reference data."""
-        # Load individuals
-        if ANCIENT_INDIVIDUALS_FILE.exists():
-            with open(ANCIENT_INDIVIDUALS_FILE) as f:
-                data = json.load(f)
-                self.individuals = data.get("individuals", [])
-        
-        # Load cultures
-        if ANCIENT_CULTURES_FILE.exists():
-            with open(ANCIENT_CULTURES_FILE) as f:
-                data = json.load(f)
-                self.cultures = data.get("cultures", {})
-    
-    def calculate_ibs_distance(
-        self, 
-        user_genotypes: Dict[str, str], 
-        ancient_genotypes: Dict[str, str],
-        min_snps: int = 5
-    ) -> Tuple[Optional[float], int, int]:
-        """
-        Calculate Identity-by-State distance between user and ancient.
-        
-        Args:
-            user_genotypes: Dict of rsid -> genotype (e.g., "rs123": "AG")
-            ancient_genotypes: Dict of rsid -> genotype
-            min_snps: Minimum overlapping SNPs required
-            
-        Returns:
-            Tuple of (distance, shared_snp_count, total_ibs_score)
-            distance is None if insufficient overlap
-        """
-        # Find shared SNPs
-        shared_snps = set(user_genotypes.keys()) & set(ancient_genotypes.keys())
-        
-        if len(shared_snps) < min_snps:
-            return (None, len(shared_snps), 0)
-        
-        total_ibs = 0
-        valid_comparisons = 0
-        
-        for rs in shared_snps:
-            user_geno = user_genotypes[rs].upper()
-            ancient_geno = ancient_genotypes[rs].upper()
-            
-            # Skip if either is missing/invalid
-            if len(user_geno) < 2 or len(ancient_geno) < 2:
-                continue
-            if user_geno in ['--', 'II', 'DD', 'DI', 'ID', '00', 'NC']:
-                continue
-            if ancient_geno in ['--', 'II', 'DD', 'DI', 'ID', '00', 'NC']:
-                continue
-            
-            # Calculate IBS
-            user_alleles = set(user_geno)
-            ancient_alleles = set(ancient_geno)
-            
-            # Count matching alleles
-            ibs = len(user_alleles & ancient_alleles)
-            
-            # If both homozygous, max IBS is 2 (both alleles match)
-            # If one hetero one homo, max IBS is 1
-            # If both hetero with same alleles, IBS is 2
-            
-            # Normalize: if genotypes identical, IBS=2
-            if user_geno == ancient_geno or (set(user_geno) == set(ancient_geno)):
-                ibs = 2
-            elif len(user_alleles & ancient_alleles) > 0:
-                # Partial match
-                # AA vs AG = 1, AG vs AG = 2, AA vs GG = 0
-                if len(user_alleles) == 1 and len(ancient_alleles) == 1:
-                    # Both homozygous
-                    ibs = 2 if user_alleles == ancient_alleles else 0
-                else:
-                    # At least one heterozygous
-                    ibs = len(user_alleles & ancient_alleles)
-            else:
-                ibs = 0
-            
-            total_ibs += ibs
-            valid_comparisons += 1
-        
-        if valid_comparisons < min_snps:
-            return (None, valid_comparisons, total_ibs)
-        
-        # Distance: 0 = identical (all IBS=2), 1 = no match (all IBS=0)
-        max_ibs = 2 * valid_comparisons
-        distance = 1 - (total_ibs / max_ibs)
-        
-        return (distance, valid_comparisons, total_ibs)
-    
-    def find_closest_ancients(
-        self, 
-        user_genotypes: Dict[str, str], 
-        top_n: int = 20,
-        min_snps: int = 5
-    ) -> List[AncientMatch]:
-        """
-        Find the N closest ancient individuals to the user.
-        
-        Args:
-            user_genotypes: Dict of rsid -> genotype
-            top_n: Number of top matches to return
-            min_snps: Minimum shared SNPs for a valid match
-            
-        Returns:
-            List of AncientMatch objects, sorted by similarity (highest first)
-        """
-        matches = []
-        
-        for individual in self.individuals:
-            ancient_snps = individual.get("snps", {})
-            
-            distance, shared, _ = self.calculate_ibs_distance(
-                user_genotypes, ancient_snps, min_snps
-            )
-            
-            if distance is None:
-                continue
-            
-            similarity = 100 * (1 - distance)
-            
-            # Find shared traits
-            shared_traits = self._find_shared_traits(user_genotypes, ancient_snps)
-            
-            match = AncientMatch(
-                id=individual["id"],
-                name=individual["name"],
-                similarity=round(similarity, 2),
-                distance=round(distance, 4),
-                shared_snps=shared,
-                total_snps=len(ancient_snps),
-                period=individual.get("period", "Unknown"),
-                culture=individual.get("culture", "Unknown"),
-                site=individual.get("site", "Unknown"),
-                country=individual.get("country", "Unknown"),
-                age_text=individual.get("age_text", "Unknown"),
-                description=individual.get("description", ""),
-                lat=individual.get("lat"),
-                lon=individual.get("lon"),
-                mt_haplogroup=individual.get("mt_haplogroup"),
-                y_haplogroup=individual.get("y_haplogroup"),
-                shared_traits=shared_traits,
-                paper=individual.get("paper"),
-                pmid=individual.get("pmid")
-            )
-            matches.append(match)
-        
-        # Sort by similarity (highest first)
-        matches.sort(key=lambda m: m.similarity, reverse=True)
-        
-        return matches[:top_n]
-    
-    def _find_shared_traits(
-        self, 
-        user_genotypes: Dict[str, str], 
-        ancient_genotypes: Dict[str, str]
-    ) -> List[str]:
-        """Find phenotypic traits likely shared between user and ancient."""
-        shared_traits = []
-        
-        # Key trait SNPs
-        trait_snps = {
-            "rs12913832": {
-                "GG": "Blue eyes",
-                "GA": "Blue/green eyes",
-                "AA": "Brown eyes"
-            },
-            "rs1426654": {
-                "AA": "Light skin (SLC24A5)",
-                "GA": "Intermediate skin",
-                "GG": "Dark skin (ancestral)"
-            },
-            "rs16891982": {
-                "GG": "Light skin (SLC45A2)",
-                "GC": "Intermediate skin",
-                "CC": "Darker skin"
-            },
-            "rs4988235": {
-                "AA": "Lactase persistent",
-                "GA": "Lactase persistent",
-                "GG": "Lactose intolerant"
-            },
-            "rs1805007": {
-                "TT": "Red hair risk",
-                "CT": "Red hair carrier",
-                "CC": "Non-carrier"
-            }
-        }
-        
-        for rs, traits in trait_snps.items():
-            user_geno = user_genotypes.get(rs, "").upper()
-            ancient_geno = ancient_genotypes.get(rs, "").upper()
-            
-            if not user_geno or not ancient_geno:
-                continue
-            
-            # Normalize heterozygotes
-            if len(user_geno) == 2:
-                user_geno = "".join(sorted(user_geno))
-            if len(ancient_geno) == 2:
-                ancient_geno = "".join(sorted(ancient_geno))
-            
-            user_trait = traits.get(user_geno)
-            ancient_trait = traits.get(ancient_geno)
-            
-            if user_trait and user_trait == ancient_trait:
-                shared_traits.append(user_trait)
-        
-        return shared_traits
-    
-    def match_to_cultures(
-        self, 
-        user_genotypes: Dict[str, str],
-        min_snps: int = 3
-    ) -> List[CultureAffinity]:
-        """
-        Calculate affinity scores to ancient cultures.
-        
-        Uses average similarity to individuals from each culture,
-        plus diagnostic SNP matching.
-        
-        Args:
-            user_genotypes: Dict of rsid -> genotype
-            min_snps: Minimum shared SNPs per individual
-            
-        Returns:
-            List of CultureAffinity objects, sorted by affinity (highest first)
-        """
-        # Group individuals by culture
-        culture_individuals = defaultdict(list)
-        for ind in self.individuals:
-            culture_id = ind.get("culture", "Unknown").lower().replace(" ", "_").replace("(", "").replace(")", "")
-            culture_individuals[culture_id].append(ind)
-        
-        affinities = []
-        
-        for culture_id, culture_data in self.cultures.items():
-            # Find individuals matching this culture (fuzzy match)
-            matching_individuals = []
-            culture_name_lower = culture_data["name"].lower()
-            culture_abbrev = culture_data.get("abbreviation", "").lower()
-            
-            for ind in self.individuals:
-                ind_culture = ind.get("culture", "").lower()
-                if (culture_name_lower in ind_culture or 
-                    culture_abbrev in ind_culture or
-                    culture_id in ind_culture.replace(" ", "_").replace("(", "").replace(")", "")):
-                    matching_individuals.append(ind)
-            
-            if not matching_individuals:
-                continue
-            
-            # Calculate average similarity to individuals
-            similarities = []
-            shared_snp_counts = []
-            
-            for ind in matching_individuals:
-                ancient_snps = ind.get("snps", {})
-                distance, shared, _ = self.calculate_ibs_distance(
-                    user_genotypes, ancient_snps, min_snps
-                )
-                if distance is not None:
-                    similarities.append(100 * (1 - distance))
-                    shared_snp_counts.append(shared)
-            
-            if not similarities:
-                continue
-            
-            avg_similarity = sum(similarities) / len(similarities)
-            avg_shared = sum(shared_snp_counts) / len(shared_snp_counts)
-            
-            # Check diagnostic SNPs
-            diagnostic_matches = {}
-            diag_snps = culture_data.get("diagnostic_snps", {})
-            for rs, info in diag_snps.items():
-                user_geno = user_genotypes.get(rs, "").upper()
-                if user_geno:
-                    ancestral = info.get("ancestral", "")
-                    if ancestral in user_geno:
-                        diagnostic_matches[rs] = f"Carries {ancestral} ({info.get('note', '')})"
-            
-            affinity = CultureAffinity(
-                id=culture_id,
-                name=culture_data["name"],
-                affinity=round(avg_similarity, 2),
-                period=culture_data.get("period", "Unknown"),
-                regions=culture_data.get("regions", []),
-                description=culture_data.get("description", ""),
-                sample_count=len(similarities),
-                avg_shared_snps=round(avg_shared, 1),
-                diagnostic_matches=diagnostic_matches,
-                map_color=culture_data.get("map_color", "#888888")
-            )
-            affinities.append(affinity)
-        
-        # Sort by affinity (highest first)
-        affinities.sort(key=lambda a: a.affinity, reverse=True)
-        
-        return affinities
-    
-    def generate_detailed_comparison(
-        self, 
-        user_genotypes: Dict[str, str], 
-        ancient_id: str
-    ) -> Dict[str, Any]:
-        """
-        Generate detailed SNP-by-SNP comparison with specific ancient individual.
-        
-        Args:
-            user_genotypes: Dict of rsid -> genotype
-            ancient_id: ID of ancient individual
-            
-        Returns:
-            Dict with detailed comparison data
-        """
-        # Find the individual
-        individual = None
-        for ind in self.individuals:
-            if ind["id"] == ancient_id:
-                individual = ind
-                break
-        
-        if not individual:
-            return {"error": f"Individual {ancient_id} not found"}
-        
-        ancient_snps = individual.get("snps", {})
-        shared_snps = set(user_genotypes.keys()) & set(ancient_snps.keys())
-        
-        comparisons = []
-        for rs in sorted(shared_snps):
-            user_geno = user_genotypes[rs].upper()
-            ancient_geno = ancient_snps[rs].upper()
-            
-            # Calculate match
-            user_alleles = set(user_geno) if len(user_geno) >= 2 else set()
-            ancient_alleles = set(ancient_geno) if len(ancient_geno) >= 2 else set()
-            
-            if user_geno == ancient_geno or (user_alleles == ancient_alleles):
-                match_type = "identical"
-            elif len(user_alleles & ancient_alleles) > 0:
-                match_type = "partial"
-            else:
-                match_type = "different"
-            
-            comparisons.append({
-                "rsid": rs,
-                "user": user_geno,
-                "ancient": ancient_geno,
-                "match_type": match_type
-            })
-        
-        distance, shared, total_ibs = self.calculate_ibs_distance(
-            user_genotypes, ancient_snps
-        )
-        
-        return {
-            "individual": {
-                "id": individual["id"],
-                "name": individual["name"],
-                "period": individual.get("period"),
-                "culture": individual.get("culture"),
-                "site": individual.get("site"),
-                "age_text": individual.get("age_text"),
-                "description": individual.get("description"),
-                "paper": individual.get("paper"),
-                "pmid": individual.get("pmid")
-            },
-            "summary": {
-                "similarity": round(100 * (1 - distance), 2) if distance else None,
-                "distance": round(distance, 4) if distance else None,
-                "shared_snps": shared,
-                "total_ibs_score": total_ibs,
-                "max_possible_ibs": 2 * shared
-            },
-            "comparisons": comparisons,
-            "identical_count": sum(1 for c in comparisons if c["match_type"] == "identical"),
-            "partial_count": sum(1 for c in comparisons if c["match_type"] == "partial"),
-            "different_count": sum(1 for c in comparisons if c["match_type"] == "different")
-        }
-    
-    def generate_timeline_data(
-        self, 
-        matches: List[AncientMatch]
-    ) -> List[Dict]:
-        """
-        Generate data for timeline visualization.
-        
-        Args:
-            matches: List of AncientMatch objects
-            
-        Returns:
-            List of timeline entries with time periods and match info
-        """
-        timeline = []
-        
-        for match in matches:
-            # Parse age from age_text
-            age_text = match.age_text
-            
-            # Extract approximate year
-            year = None
-            if "BCE" in age_text:
-                # Extract number before BCE
-                import re
-                nums = re.findall(r'[\d,]+', age_text)
-                if nums:
-                    year = -int(nums[0].replace(',', ''))
-            elif "CE" in age_text:
-                nums = re.findall(r'[\d,]+', age_text)
-                if nums:
-                    year = int(nums[0].replace(',', ''))
-            
-            if year is not None:
-                timeline.append({
-                    "name": match.name,
-                    "year": year,
-                    "year_display": age_text,
-                    "period": match.period,
-                    "culture": match.culture,
-                    "similarity": match.similarity,
-                    "lat": match.lat,
-                    "lon": match.lon
-                })
-        
-        # Sort by year (oldest first)
-        timeline.sort(key=lambda x: x["year"])
-        
-        return timeline
-    
-    def get_all_periods(self) -> List[Dict]:
-        """Get list of all time periods for reference."""
-        periods = [
-            {"name": "Mesolithic", "start": -10000, "end": -5000, "color": "#2E86AB"},
-            {"name": "Neolithic", "start": -5000, "end": -2500, "color": "#F18F01"},
-            {"name": "Chalcolithic", "start": -3500, "end": -2500, "color": "#D4A373"},
-            {"name": "Bronze Age", "start": -2500, "end": -800, "color": "#CD7F32"},
-            {"name": "Iron Age", "start": -800, "end": 43, "color": "#4A7C59"},
-            {"name": "Roman", "start": 43, "end": 410, "color": "#DC143C"},
-            {"name": "Early Medieval", "start": 410, "end": 1066, "color": "#6247AA"}
-        ]
-        return periods
-
-
-def analyze_ancient_matches(user_genotypes: Dict[str, str]) -> Dict[str, Any]:
-    """
-    Main function to run full ancient DNA analysis.
+    Identity by State (IBS) is a simple measure of genetic similarity:
+    - 2 = identical genotype (e.g., AA vs AA)
+    - 1 = partial match (e.g., AA vs AG)  
+    - 0 = no match (e.g., AA vs GG)
     
     Args:
-        user_genotypes: Dict of rsid -> genotype
+        user_genos: Dict mapping rsid -> genotype for user
+        ancient_genos: Dict mapping rsid -> genotype for ancient individual
+        weighted: Whether to weight informative SNPs more heavily
         
     Returns:
-        Dict with all analysis results
+        Dict with distance, shared_snps, ibs_score, and details
+        Returns None if insufficient shared SNPs
     """
-    matcher = AncientDNAMatcher()
+    # Find shared SNPs (excluding null/missing in ancient)
+    shared_snps = []
+    for rsid in user_genos:
+        if rsid in ancient_genos and ancient_genos[rsid]:
+            user_geno = normalize_genotype(user_genos[rsid])
+            ancient_geno = normalize_genotype(ancient_genos[rsid])
+            if user_geno and ancient_geno:
+                shared_snps.append(rsid)
     
-    # Get matches
-    matches = matcher.find_closest_ancients(user_genotypes, top_n=30)
+    if len(shared_snps) < 3:
+        return None
     
-    # Get culture affinities
-    affinities = matcher.match_to_cultures(user_genotypes)
+    # Calculate IBS
+    total_ibs = 0
+    max_ibs = 0
+    details = []
     
-    # Generate timeline
-    timeline = matcher.generate_timeline_data(matches)
+    # SNP weights (ancestry-informative markers weighted higher)
+    informative_snps = {
+        "rs1426654": 2.0,   # SLC24A5 - highly informative
+        "rs16891982": 2.0,  # SLC45A2 - highly informative
+        "rs12913832": 1.5,  # HERC2 - eye color
+        "rs4988235": 1.5,   # LCT - lactase
+        "rs3827760": 2.0,   # EDAR - East Asian specific
+        "rs2814778": 2.0,   # DARC - African specific
+    }
     
-    # Get periods reference
-    periods = matcher.get_all_periods()
+    for rsid in shared_snps:
+        user_geno = normalize_genotype(user_genos[rsid])
+        ancient_geno = normalize_genotype(ancient_genos[rsid])
+        
+        weight = informative_snps.get(rsid, 1.0) if weighted else 1.0
+        
+        # Calculate IBS (0, 1, or 2)
+        if user_geno == ancient_geno:
+            ibs = 2
+        elif set(user_geno) & set(ancient_geno):  # At least one allele shared
+            ibs = 1
+        else:
+            ibs = 0
+        
+        total_ibs += ibs * weight
+        max_ibs += 2 * weight
+        
+        details.append({
+            "rsid": rsid,
+            "user": user_geno,
+            "ancient": ancient_geno,
+            "ibs": ibs,
+            "match": "identical" if ibs == 2 else "partial" if ibs == 1 else "different"
+        })
+    
+    # Calculate normalized distance (0 = identical, 1 = completely different)
+    ibs_score = total_ibs / max_ibs if max_ibs > 0 else 0
+    distance = 1 - ibs_score
     
     return {
-        "matches": [m.to_dict() for m in matches],
-        "culture_affinities": [
-            {
-                "id": a.id,
-                "name": a.name,
-                "affinity": a.affinity,
-                "period": a.period,
-                "regions": a.regions,
-                "description": a.description,
-                "sample_count": a.sample_count,
-                "map_color": a.map_color
-            }
-            for a in affinities
-        ],
+        "distance": round(distance, 4),
+        "similarity": round(ibs_score * 100, 1),  # As percentage
+        "shared_snps": len(shared_snps),
+        "total_ibs": total_ibs,
+        "max_ibs": max_ibs,
+        "details": details
+    }
+
+
+def calculate_trait_matches(
+    user_genos: Dict[str, str],
+    ancient_data: Dict[str, Any]
+) -> List[Dict[str, Any]]:
+    """
+    Determine which physical traits user shares with ancient individual.
+    
+    Returns list of matched/different traits based on known marker effects.
+    """
+    trait_markers = {
+        "rs1426654": {
+            "trait": "Skin pigmentation",
+            "derived": "AA",
+            "derived_effect": "Light skin",
+            "ancestral": "GG",
+            "ancestral_effect": "Dark skin"
+        },
+        "rs16891982": {
+            "trait": "Skin pigmentation",
+            "derived": "GG",
+            "derived_effect": "Light skin",
+            "ancestral": "CC",
+            "ancestral_effect": "Darker skin"
+        },
+        "rs12913832": {
+            "trait": "Eye color",
+            "derived": "GG",
+            "derived_effect": "Blue eyes",
+            "ancestral": "AA",
+            "ancestral_effect": "Brown eyes"
+        },
+        "rs4988235": {
+            "trait": "Lactase persistence",
+            "derived": "AA",
+            "derived_effect": "Can digest milk as adult",
+            "ancestral": "GG",
+            "ancestral_effect": "Lactose intolerant"
+        }
+    }
+    
+    ancient_snps = ancient_data.get("snps", {})
+    matches = []
+    
+    for rsid, info in trait_markers.items():
+        user_geno = normalize_genotype(user_genos.get(rsid, ""))
+        ancient_geno = normalize_genotype(ancient_snps.get(rsid, ""))
+        
+        if not user_geno or not ancient_geno:
+            continue
+        
+        # Determine user's trait
+        if user_geno == info["derived"]:
+            user_trait = info["derived_effect"]
+        elif user_geno == info["ancestral"]:
+            user_trait = info["ancestral_effect"]
+        else:
+            user_trait = "Intermediate"
+        
+        # Determine ancient's trait
+        if ancient_geno == info["derived"]:
+            ancient_trait = info["derived_effect"]
+        elif ancient_geno == info["ancestral"]:
+            ancient_trait = info["ancestral_effect"]
+        else:
+            ancient_trait = "Intermediate"
+        
+        match = user_geno == ancient_geno
+        
+        matches.append({
+            "trait": info["trait"],
+            "rsid": rsid,
+            "user_genotype": user_geno,
+            "user_trait": user_trait,
+            "ancient_genotype": ancient_geno,
+            "ancient_trait": ancient_trait,
+            "match": match,
+            "symbol": "✓" if match else "✗"
+        })
+    
+    return matches
+
+
+# =============================================================================
+# ANCIENT INDIVIDUAL MATCHING
+# =============================================================================
+
+def find_closest_ancients(
+    user_genos: Dict[str, str],
+    top_n: int = 10,
+    min_shared_snps: int = 3
+) -> List[Dict[str, Any]]:
+    """
+    Find the closest ancient individuals to the user.
+    
+    Args:
+        user_genos: User's genotypes
+        top_n: Number of top matches to return
+        min_shared_snps: Minimum SNPs required for a valid comparison
+        
+    Returns:
+        List of ancient matches sorted by similarity
+    """
+    ancient_data = get_ancient_individuals()
+    results = []
+    
+    for ancient_id, individual in ancient_data.items():
+        if ancient_id.startswith("_"):  # Skip metadata
+            continue
+        
+        ancient_snps = individual.get("snps", {})
+        if not ancient_snps:
+            continue
+        
+        distance_result = calculate_genetic_distance(user_genos, ancient_snps)
+        
+        if distance_result is None:
+            continue
+        
+        if distance_result["shared_snps"] < min_shared_snps:
+            continue
+        
+        trait_matches = calculate_trait_matches(user_genos, individual)
+        
+        results.append({
+            "id": ancient_id,
+            "name": individual.get("name", ancient_id),
+            "site": individual.get("site", "Unknown"),
+            "country": individual.get("country", ""),
+            "age_bp": individual.get("age_bp", 0),
+            "age_calBCE": individual.get("age_calBCE", 0),
+            "period": individual.get("period", "Unknown"),
+            "culture": individual.get("culture", ""),
+            "culture_name": individual.get("culture_name", ""),
+            "sex": individual.get("sex", "Unknown"),
+            "description": individual.get("description", ""),
+            "significance": individual.get("significance", ""),
+            "physical_traits": individual.get("physical_traits", []),
+            "paper": individual.get("paper", ""),
+            "pmid": individual.get("pmid", ""),
+            
+            # Matching results
+            "genetic_distance": distance_result["distance"],
+            "similarity_percent": distance_result["similarity"],
+            "shared_snps": distance_result["shared_snps"],
+            "trait_comparison": trait_matches,
+            "snp_details": distance_result["details"]
+        })
+    
+    # Sort by similarity (highest first)
+    results.sort(key=lambda x: x["similarity_percent"], reverse=True)
+    
+    return results[:top_n]
+
+
+# =============================================================================
+# CULTURAL AFFINITY
+# =============================================================================
+
+def match_to_cultures(user_genos: Dict[str, str]) -> List[Dict[str, Any]]:
+    """
+    Calculate affinity scores for each ancient culture.
+    
+    Aggregates individual matches within each culture to give overall affinity.
+    
+    Args:
+        user_genos: User's genotypes
+        
+    Returns:
+        List of cultures with affinity scores
+    """
+    ancient_individuals = get_ancient_individuals()
+    ancient_cultures = get_ancient_cultures()
+    
+    # Group individuals by culture and calculate average similarity
+    culture_scores = defaultdict(lambda: {"total_similarity": 0, "count": 0, "individuals": []})
+    
+    for ancient_id, individual in ancient_individuals.items():
+        if ancient_id.startswith("_"):
+            continue
+        
+        culture = individual.get("culture", "")
+        if not culture:
+            continue
+        
+        ancient_snps = individual.get("snps", {})
+        distance_result = calculate_genetic_distance(user_genos, ancient_snps)
+        
+        if distance_result is None:
+            continue
+        
+        culture_scores[culture]["total_similarity"] += distance_result["similarity"]
+        culture_scores[culture]["count"] += 1
+        culture_scores[culture]["individuals"].append({
+            "id": ancient_id,
+            "name": individual.get("name", ancient_id),
+            "similarity": distance_result["similarity"]
+        })
+    
+    # Build results with culture metadata
+    results = []
+    
+    for culture_id, scores in culture_scores.items():
+        if scores["count"] == 0:
+            continue
+        
+        avg_similarity = scores["total_similarity"] / scores["count"]
+        culture_info = ancient_cultures.get(culture_id, {})
+        
+        results.append({
+            "culture_id": culture_id,
+            "name": culture_info.get("name", culture_id),
+            "full_name": culture_info.get("full_name", culture_id),
+            "period_start": culture_info.get("period_start", 0),
+            "period_end": culture_info.get("period_end", 0),
+            "color": culture_info.get("color", "#888888"),
+            "icon": culture_info.get("icon", "🏛️"),
+            "regions": culture_info.get("regions", []),
+            "description": culture_info.get("description", ""),
+            "modern_contribution": culture_info.get("modern_contribution", ""),
+            "pmid": culture_info.get("pmid", []),
+            
+            # Affinity results
+            "affinity_percent": round(avg_similarity, 1),
+            "individuals_compared": scores["count"],
+            "top_individuals": sorted(scores["individuals"], key=lambda x: x["similarity"], reverse=True)[:3]
+        })
+    
+    # Sort by affinity
+    results.sort(key=lambda x: x["affinity_percent"], reverse=True)
+    
+    return results
+
+
+# =============================================================================
+# REPORT GENERATION
+# =============================================================================
+
+def make_bar(pct: float, width: int = 20) -> str:
+    """Create a simple text bar chart."""
+    filled = int(pct / 100 * width)
+    return "█" * filled + "░" * (width - filled)
+
+
+def generate_ancient_matches_report(user_genos: Dict[str, str]) -> str:
+    """
+    Generate a detailed text report of ancient matches.
+    
+    Args:
+        user_genos: User's genotypes
+        
+    Returns:
+        Formatted text report
+    """
+    lines = []
+    lines.append("=" * 70)
+    lines.append("🏛️ YOUR ANCIENT DNA MATCHES")
+    lines.append("=" * 70)
+    lines.append("")
+    lines.append("This analysis compares your DNA against published ancient genomes")
+    lines.append("using Identity by State (IBS) - a measure of shared alleles.")
+    lines.append("")
+    lines.append("⚠️  IMPORTANT: This is an EDUCATIONAL tool, not precise ancestry.")
+    lines.append("Ancient DNA coverage is sparse - we only compare overlapping SNPs.")
+    lines.append("")
+    
+    # Get matches
+    matches = find_closest_ancients(user_genos, top_n=10)
+    
+    if not matches:
+        lines.append("❌ Insufficient SNP overlap with ancient reference data.")
+        return "\n".join(lines)
+    
+    lines.append("-" * 70)
+    lines.append("🏆 TOP ANCIENT MATCHES")
+    lines.append("-" * 70)
+    lines.append("")
+    
+    for i, match in enumerate(matches[:5], 1):
+        lines.append(f"#{i} {match['name'].upper()}")
+        lines.append(f"    Genetic Distance: {match['genetic_distance']:.2f}")
+        lines.append(f"    Similarity: {match['similarity_percent']:.1f}%  {make_bar(match['similarity_percent'])}")
+        lines.append(f"    Period: {match['period']} ({match['age_calBCE']} BCE)")
+        lines.append(f"    Site: {match['site']}")
+        lines.append(f"    Culture: {match['culture_name']}")
+        
+        if match['description']:
+            # Word wrap description
+            desc = match['description']
+            words = desc.split()
+            line = "    "
+            for word in words:
+                if len(line) + len(word) > 65:
+                    lines.append(line)
+                    line = "    "
+                line += word + " "
+            if line.strip():
+                lines.append(line)
+        
+        # Trait comparison
+        traits = [t for t in match.get('trait_comparison', []) if t['match']]
+        if traits:
+            lines.append("\n    Shared traits:")
+            for t in traits:
+                lines.append(f"      ✓ {t['trait']}: {t['user_trait']}")
+        
+        if match.get('pmid'):
+            lines.append(f"\n    Reference: PMID:{match['pmid']}")
+        
+        lines.append("")
+    
+    # Cultural affinities
+    lines.append("-" * 70)
+    lines.append("📊 CULTURAL AFFINITIES")
+    lines.append("-" * 70)
+    lines.append("")
+    
+    cultures = match_to_cultures(user_genos)
+    
+    for culture in cultures[:8]:
+        name = culture['name']
+        pct = culture['affinity_percent']
+        icon = culture.get('icon', '🏛️')
+        bar = make_bar(pct)
+        lines.append(f"{icon} {name:30} {pct:5.1f}%  {bar}")
+    
+    lines.append("")
+    
+    # Timeline
+    lines.append("-" * 70)
+    lines.append("📅 YOUR MATCHES THROUGH TIME")
+    lines.append("-" * 70)
+    lines.append("")
+    
+    # Sort matches by age
+    sorted_matches = sorted(matches, key=lambda x: x.get('age_calBCE', 0), reverse=True)
+    
+    for match in sorted_matches[:7]:
+        year = match.get('age_calBCE', 0)
+        year_str = f"{abs(year)} BCE" if year < 0 else f"{year} CE"
+        if year == 0:
+            year_str = "Unknown"
+        lines.append(f"  {year_str:12} │ {match['name']} ({match['culture_name']})")
+    
+    lines.append("")
+    
+    # Methodology
+    lines.append("=" * 70)
+    lines.append("📖 METHODOLOGY")
+    lines.append("=" * 70)
+    lines.append("")
+    lines.append("How we calculate genetic distance:")
+    lines.append("  1. Find SNPs present in both your data and ancient sample")
+    lines.append("  2. Compare genotypes using Identity by State (IBS):")
+    lines.append("     - IBS=2: Identical genotype (AA vs AA)")
+    lines.append("     - IBS=1: Partial match (AA vs AG)")
+    lines.append("     - IBS=0: No match (AA vs GG)")
+    lines.append("  3. Sum IBS scores and normalize to 0-1 scale")
+    lines.append("  4. Distance = 1 - normalized_IBS")
+    lines.append("")
+    lines.append("Ancestry-informative SNPs (SLC24A5, SLC45A2, HERC2, LCT)")
+    lines.append("are weighted more heavily as they better distinguish populations.")
+    lines.append("")
+    lines.append("LIMITATIONS:")
+    lines.append("• Consumer arrays only test ~1M of 3B SNPs")
+    lines.append("• Ancient DNA often has missing data")
+    lines.append("• We only compare 5-20 overlapping SNPs per sample")
+    lines.append("• This is educational, not definitive ancestry")
+    lines.append("")
+    lines.append("All ancient samples from peer-reviewed publications.")
+    lines.append("PMIDs provided for verification.")
+    lines.append("")
+    
+    return "\n".join(lines)
+
+
+# =============================================================================
+# JSON EXPORT FOR DASHBOARD
+# =============================================================================
+
+def get_ancient_matches_json(user_genos: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Get comprehensive ancient matching data as JSON for dashboard.
+    
+    Args:
+        user_genos: User's genotypes
+        
+    Returns:
+        Structured data for dashboard visualization
+    """
+    matches = find_closest_ancients(user_genos, top_n=15)
+    cultures = match_to_cultures(user_genos)
+    
+    # Build timeline data
+    timeline = []
+    for match in matches:
+        year = match.get('age_calBCE', 0)
+        timeline.append({
+            "year": year,
+            "year_display": f"{abs(year)} BCE" if year < 0 else f"{year} CE",
+            "name": match['name'],
+            "culture": match['culture_name'],
+            "similarity": match['similarity_percent']
+        })
+    timeline.sort(key=lambda x: x['year'], reverse=True)
+    
+    # Get culture metadata for visualization
+    culture_data = get_ancient_cultures()
+    
+    return {
+        "top_matches": matches[:10],
+        "all_matches": matches,
+        "culture_affinities": cultures,
         "timeline": timeline,
-        "periods": periods,
+        "culture_metadata": {k: v for k, v in culture_data.items() if not k.startswith("_")},
+        "statistics": {
+            "total_individuals_compared": len(matches),
+            "total_cultures_compared": len(cultures),
+            "best_match_similarity": matches[0]["similarity_percent"] if matches else 0,
+            "avg_snps_compared": sum(m["shared_snps"] for m in matches) / len(matches) if matches else 0
+        },
         "methodology": {
-            "method": "Identity-by-State (IBS)",
-            "description": "We compare your DNA directly to published ancient genomes by counting shared alleles at each SNP position.",
-            "similarity_meaning": "100% = identical at all compared SNPs; 50% = typical for distantly related individuals",
-            "note": "Unlike proprietary services, our methodology is fully transparent and every ancient sample is cited with its publication.",
+            "method": "Identity by State (IBS)",
+            "description": "Counts shared alleles between user and ancient samples",
             "limitations": [
-                "Similarity depends on which SNPs are available in both samples",
-                "Ancient DNA often has missing data due to degradation",
-                "High similarity does not mean direct descent",
-                "Population-level averages may not represent individuals"
+                "Consumer arrays test ~0.03% of the genome",
+                "Ancient DNA has missing data",
+                "Only 5-20 SNPs typically overlap",
+                "Educational tool, not precise ancestry"
+            ],
+            "sources": [
+                "Allen Ancient DNA Resource (AADR)",
+                "Reich Lab publications",
+                "Published studies with PMID citations"
             ]
         }
     }
 
 
-# Export functions for use by other modules
-__all__ = [
-    'AncientDNAMatcher',
-    'AncientMatch', 
-    'CultureAffinity',
-    'analyze_ancient_matches'
-]
+# =============================================================================
+# CONVENIENCE EXPORTS
+# =============================================================================
 
-
-if __name__ == "__main__":
-    # Test with sample genotypes
-    sample_user = {
-        "rs12913832": "GA",  # Blue/green eyes
-        "rs1426654": "AA",   # Light skin
-        "rs16891982": "GG",  # Light skin  
-        "rs4988235": "GA",   # Lactase persistent
-        "rs1805007": "CC",   # Non-red hair
-        "rs1800407": "CT",
-        "rs4778241": "GA",
-        "rs12203592": "CC",
-        "rs1042602": "CA"
+def analyze_ancient_ancestry(user_genos: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Complete ancient ancestry analysis for integration with main analysis.
+    
+    Args:
+        user_genos: User's genotypes
+        
+    Returns:
+        Combined results suitable for agent_summary.json
+    """
+    json_data = get_ancient_matches_json(user_genos)
+    
+    # Simplify for agent summary
+    top_3 = []
+    for m in json_data.get("top_matches", [])[:3]:
+        top_3.append({
+            "name": m["name"],
+            "culture": m["culture_name"],
+            "period": m["period"],
+            "similarity": m["similarity_percent"],
+            "pmid": m.get("pmid", "")
+        })
+    
+    top_cultures = []
+    for c in json_data.get("culture_affinities", [])[:5]:
+        top_cultures.append({
+            "name": c["name"],
+            "affinity": c["affinity_percent"],
+            "icon": c.get("icon", "🏛️")
+        })
+    
+    return {
+        "top_ancient_matches": top_3,
+        "cultural_affinities": top_cultures,
+        "total_compared": json_data.get("statistics", {}).get("total_individuals_compared", 0),
+        "methodology_note": "IBS-based genetic distance. Educational, not precise ancestry.",
+        "full_data": json_data
     }
-    
-    results = analyze_ancient_matches(sample_user)
-    
-    print("=" * 70)
-    print("ANCIENT DNA MATCHING RESULTS")
-    print("=" * 70)
-    
-    print("\nTOP 10 CLOSEST ANCIENT INDIVIDUALS:")
-    print("-" * 70)
-    for i, match in enumerate(results["matches"][:10], 1):
-        print(f"{i}. {match['name']} ({match['period']})")
-        print(f"   Similarity: {match['similarity']}% | Shared SNPs: {match['shared_snps']}")
-        print(f"   Culture: {match['culture']}")
-        print(f"   Site: {match['site']}, {match['country']}")
-        if match['shared_traits']:
-            print(f"   Shared traits: {', '.join(match['shared_traits'])}")
-        print()
-    
-    print("\nCULTURE AFFINITIES:")
-    print("-" * 70)
-    for aff in results["culture_affinities"][:10]:
-        print(f"{aff['name']}: {aff['affinity']}% ({aff['period']})")
