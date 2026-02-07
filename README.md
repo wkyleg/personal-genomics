@@ -1,8 +1,24 @@
-# Personal Genomics v4.2.0
+# Personal Genomics v5.0.0
 
 Privacy-first local DNA analysis for AI agents. Comprehensive genetic analysis with **1600+ validated markers** across **30 categories** covering pharmacogenomics, disease risk, carrier status, haplogroups, ancestry, hereditary cancer, autoimmune conditions, pain sensitivity, lifestyle optimization, and more.
 
-**NEW in v4.2.0: Interactive HTML Dashboard!**
+**NEW in v5.0.0: Reference Dataset Integration!**
+
+9 major genomics reference databases integrated for validated analysis:
+
+| Dataset | Type | Coverage |
+|---------|------|----------|
+| **1000 Genomes** | Population | 26 populations, ~2,500 individuals |
+| **HGDP** | Population | 51 populations, ~1,000 individuals |
+| **SGDP** | Population | 142 populations, 300 individuals (deep sequencing) |
+| **Ancient DNA** | Ancestry | WHG, Neolithic, Yamnaya, Neanderthal markers |
+| **gnomAD** | Allele Frequencies | 76,000+ genomes |
+| **ClinVar** | Clinical Variants | Pathogenicity classifications |
+| **PharmGKB** | Pharmacogenomics | Drug-gene interactions |
+| **PGS Catalog** | Risk Scores | Polygenic score coefficients |
+| **GWAS Catalog** | Trait Associations | Published GWAS results |
+
+All data downloaded and cached locally for privacy-first analysis.
 
 ![Logo](logo.svg)
 
@@ -110,6 +126,41 @@ Privacy-first local DNA analysis for AI agents. Comprehensive genetic analysis w
 - Sections: Overview, Pharmacogenomics, Health Risks, Traits, Ancestry, Carrier Status, Sleep, Athletic, UV/Skin, Dietary
 - Export to PDF (print functionality)
 - Drag & drop JSON loading
+
+### New in v5.0.0
+
+📊 **Reference Dataset Integration**
+
+9 major genomics databases integrated for validated, evidence-based analysis:
+
+**Population/Ancestry:**
+- **1000 Genomes** - 26 populations from 5 superpopulations (~2,500 individuals)
+- **HGDP** - Human Genome Diversity Project (51 populations, ~1,000 individuals)
+- **SGDP** - Simons Genome Diversity Project (142 populations, 300 individuals, 43x deep sequencing)
+- **Ancient DNA** - Curated markers for ancestral population signals
+
+**Health/Clinical:**
+- **gnomAD** - Genome Aggregation Database (76,000+ genomes for allele frequencies)
+- **ClinVar** - Clinical variant interpretations with pathogenicity classifications
+- **PharmGKB** - Pharmacogenomics knowledge base with dosing guidelines
+- **PGS Catalog** - Polygenic risk score coefficients
+- **GWAS Catalog** - Published genome-wide association results
+
+🏛️ **Ancient Ancestral Signals**
+
+Replace misleading "ethnicity percentages" with honest ancient population signals:
+- **Western Hunter-Gatherers (WHG)** - Pre-Neolithic Europeans (~14,000-5,000 BCE)
+- **Eastern Hunter-Gatherers (EHG)** - Eastern European/Siberian
+- **Neolithic Farmers** - Anatolian agricultural migrants
+- **Yamnaya/Steppe** - Bronze Age pastoralists from Pontic-Caspian steppe
+- **Neanderthal Introgression** - Archaic admixture (~2% in non-Africans)
+- **Denisovan Introgression** - Archaic admixture (East Asian/Oceanian)
+
+Each signal includes:
+- Marker count and derived allele frequency
+- Phenotypic evidence (eye color, skin pigmentation, lactase persistence)
+- Confidence level
+- Published references (PMIDs)
 
 🛡️ **Code Quality Improvements**
 - Complete type hints throughout codebase
