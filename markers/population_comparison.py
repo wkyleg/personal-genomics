@@ -7,6 +7,12 @@ This provides TRANSPARENT comparisons - users see actual data, not black-box est
 Key principle: We show "how your genotypes compare to reference populations" 
 NOT "you are X% European" - that requires statistical models with inherent biases.
 
+v4.5.0 UPDATE: Now includes full statistical rigor:
+- 95% confidence intervals for all similarity scores
+- P-values for significance testing vs random
+- Standard errors weighted by marker count
+- Confidence levels (DEFINITIVE/HIGH/MEDIUM/LOW/UNCERTAIN)
+
 Sources:
 - 1000 Genomes Project Consortium. 2015. A global reference for human genetic 
   variation. Nature 526, 68-74. PMID: 26432245
@@ -16,6 +22,31 @@ from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 import json
 import math
+import sys
+
+# Add parent directory for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+try:
+    from personal_genomics.statistics import (
+        ConfidenceLevel,
+        wilson_score_interval,
+        ancestry_similarity_stats,
+        marker_coverage_weight,
+        proportion_test_pvalue,
+        confidence_to_color,
+        format_ci_string,
+    )
+    STATS_AVAILABLE = True
+except ImportError:
+    STATS_AVAILABLE = False
+    # Fallback if statistics module not available
+    class ConfidenceLevel:
+        DEFINITIVE = "DEFINITIVE"
+        HIGH = "HIGH"
+        MEDIUM = "MEDIUM"
+        LOW = "LOW"
+        UNCERTAIN = "UNCERTAIN"
 
 # =============================================================================
 # LOAD REFERENCE DATA
@@ -218,13 +249,19 @@ def find_most_similar_populations(genotypes: Dict[str, str], top_n: int = 10) ->
     Rank populations by similarity to user's genotypes.
     
     Uses geometric mean of genotype frequencies as similarity metric.
+    NOW INCLUDES: Confidence intervals, p-values, and statistical significance.
     
     Args:
         genotypes: Dict mapping rsid -> genotype
         top_n: Number of top populations to return
         
     Returns:
-        List of populations sorted by similarity
+        List of populations sorted by similarity, each with:
+        - similarity: percentage similarity score
+        - ci_lower, ci_upper: 95% confidence interval bounds
+        - p_value: significance vs random (0.5 baseline)
+        - n_markers: number of markers used
+        - confidence: DEFINITIVE/HIGH/MEDIUM/LOW/UNCERTAIN
     """
     comparison = compare_to_populations(genotypes)
     pop_scores = comparison.get("population_match_scores", {})
@@ -238,17 +275,88 @@ def find_most_similar_populations(genotypes: Dict[str, str], top_n: int = 10) ->
     
     result = []
     for pop, data in ranked[:top_n]:
+        similarity = data.get("average_frequency", 0)
+        n_markers = data.get("markers_compared", 0)
+        
+        # Calculate statistical metrics
+        stats_result = _calculate_population_stats(similarity, n_markers)
+        
         result.append({
             "population_code": pop,
             "population_name": data.get("population_name", pop),
             "superpopulation": data.get("superpop", ""),
-            "similarity_score": data.get("average_frequency", 0),
-            "markers_compared": data.get("markers_compared", 0),
+            "similarity": round(similarity, 1),
+            "ci_lower": stats_result["ci_lower"],
+            "ci_upper": stats_result["ci_upper"],
+            "p_value": stats_result["p_value"],
+            "n_markers": n_markers,
+            "confidence": stats_result["confidence"],
+            "confidence_color": stats_result["confidence_color"],
+            "standard_error": stats_result["standard_error"],
             "flag": data.get("flag", ""),
-            "interpretation": _interpret_similarity(data.get("average_frequency", 0))
+            "interpretation": _interpret_similarity(similarity),
+            # Legacy field for backward compatibility
+            "similarity_score": round(similarity, 1),
+            "markers_compared": n_markers,
         })
     
     return result
+
+
+def _calculate_population_stats(similarity_pct: float, n_markers: int) -> Dict[str, Any]:
+    """
+    Calculate statistical metrics for a population similarity score.
+    
+    Args:
+        similarity_pct: Similarity as percentage (0-100)
+        n_markers: Number of markers compared
+        
+    Returns:
+        Dict with ci_lower, ci_upper, p_value, confidence, etc.
+    """
+    if not STATS_AVAILABLE or n_markers == 0:
+        # Fallback without statistics module
+        return {
+            "ci_lower": max(0, similarity_pct - 15),
+            "ci_upper": min(100, similarity_pct + 15),
+            "p_value": None,
+            "confidence": "UNCERTAIN" if n_markers < 5 else "LOW",
+            "confidence_color": "#f97316",
+            "standard_error": 15.0,
+        }
+    
+    # Convert to proportion for calculations
+    similarity = similarity_pct / 100.0
+    
+    # Use Wilson score interval for proportions
+    ci = wilson_score_interval(
+        successes=int(similarity * n_markers),
+        n=n_markers,
+        confidence=0.95
+    )
+    
+    # P-value: is this significantly different from random (50%)?
+    p_value = proportion_test_pvalue(similarity, 0.5, n_markers)
+    
+    # Calculate standard error
+    se = math.sqrt(similarity * (1 - similarity) / n_markers) if n_markers > 0 else 0.15
+    
+    # Determine confidence level
+    quality_score, conf_level = marker_coverage_weight(n_markers, 50)  # Assume 50 ideal markers
+    
+    # Upgrade confidence if highly significant
+    if p_value and p_value < 0.001 and n_markers >= 15:
+        if conf_level == ConfidenceLevel.MEDIUM:
+            conf_level = ConfidenceLevel.HIGH
+    
+    return {
+        "ci_lower": round(ci.lower * 100, 1),
+        "ci_upper": round(ci.upper * 100, 1),
+        "p_value": round(p_value, 6) if p_value else None,
+        "confidence": conf_level.value if hasattr(conf_level, 'value') else str(conf_level),
+        "confidence_color": confidence_to_color(conf_level) if STATS_AVAILABLE else "#6b7280",
+        "standard_error": round(se * 100, 2),
+    }
 
 
 def _interpret_similarity(score: float) -> str:

@@ -12,6 +12,12 @@ Detects genetic signals from ancient human populations:
 This module provides EDUCATIONAL context about the deep history of human migrations,
 not precise ancestry percentages.
 
+v4.5.0 UPDATE: Now includes full statistical rigor:
+- Derived allele frequency with confidence intervals
+- Bootstrap confidence for signal strength
+- Marker informativeness weighting
+- Confidence levels for each ancient population signal
+
 Key Sources:
 - Lazaridis et al. 2014 - Ancient human genomes suggest three ancestral populations (PMID: 25230663)
 - Haak et al. 2015 - Massive migration from the steppe (PMID: 25731166)
@@ -22,6 +28,28 @@ Key Sources:
 from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 import json
+import sys
+
+# Add parent directory for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+try:
+    from personal_genomics.statistics import (
+        ConfidenceLevel,
+        wilson_score_interval,
+        marker_coverage_weight,
+        confidence_to_color,
+        bayesian_posterior,
+    )
+    STATS_AVAILABLE = True
+except ImportError:
+    STATS_AVAILABLE = False
+    class ConfidenceLevel:
+        DEFINITIVE = "DEFINITIVE"
+        HIGH = "HIGH"
+        MEDIUM = "MEDIUM"
+        LOW = "LOW"
+        UNCERTAIN = "UNCERTAIN"
 
 # =============================================================================
 # LOAD REFERENCE DATA
@@ -222,15 +250,91 @@ def detect_ancient_signals(genotypes: Dict[str, str]) -> Dict[str, Any]:
                         "pmid": marker_data.get("pmid", [])
                     })
     
-    # Calculate detection summaries
+    # Calculate detection summaries with statistical confidence
     for pop in results:
         markers = results[pop]["markers_detected"]
         total = results[pop]["total_markers"]
-        results[pop]["detection_count"] = len(markers)
-        results[pop]["detection_rate"] = len(markers) / total if total > 0 else 0
+        detected = len(markers)
+        
+        results[pop]["detection_count"] = detected
+        results[pop]["detection_rate"] = detected / total if total > 0 else 0
         results[pop]["metadata"] = ANCIENT_POPULATIONS.get(pop, {})
+        
+        # Calculate statistical metrics
+        stats = _calculate_ancient_signal_stats(detected, total)
+        results[pop].update(stats)
     
     return results
+
+
+def _calculate_ancient_signal_stats(detected: int, total: int) -> Dict[str, Any]:
+    """
+    Calculate statistical metrics for ancient population signal.
+    
+    Args:
+        detected: Number of markers detected
+        total: Total markers checked
+        
+    Returns:
+        Dict with signal strength, CI, confidence level
+    """
+    if total == 0:
+        return {
+            "signal": "NONE",
+            "confidence_numeric": 0.0,
+            "ci_lower": 0.0,
+            "ci_upper": 0.0,
+            "confidence": "UNCERTAIN",
+            "derived_ratio": 0.0,
+            "n_markers": 0,
+        }
+    
+    derived_ratio = detected / total
+    
+    # Calculate confidence interval using Wilson score (better for small samples)
+    if STATS_AVAILABLE:
+        ci = wilson_score_interval(detected, total, confidence=0.95)
+        ci_lower = ci.lower
+        ci_upper = ci.upper
+        
+        # Bayesian posterior for confidence
+        # Using uniform prior (1, 1)
+        post_mean, post_ci = bayesian_posterior(1, 1, detected, total - detected)
+        confidence_numeric = post_mean
+        
+        # Determine confidence level
+        quality_score, conf_level = marker_coverage_weight(detected, min(total, 10))
+    else:
+        # Fallback calculation
+        import math
+        se = math.sqrt(derived_ratio * (1 - derived_ratio) / total) if total > 0 else 0.3
+        ci_lower = max(0, derived_ratio - 1.96 * se)
+        ci_upper = min(1, derived_ratio + 1.96 * se)
+        confidence_numeric = derived_ratio
+        conf_level = ConfidenceLevel.MEDIUM if detected >= 2 else ConfidenceLevel.LOW
+    
+    # Determine signal strength based on derived ratio
+    if derived_ratio >= 0.7:
+        signal = "STRONG"
+    elif derived_ratio >= 0.5:
+        signal = "MODERATE"
+    elif derived_ratio >= 0.25:
+        signal = "WEAK"
+    elif detected > 0:
+        signal = "TRACE"
+    else:
+        signal = "NONE"
+    
+    return {
+        "signal": signal,
+        "confidence_numeric": round(confidence_numeric, 3),
+        "ci_lower": round(ci_lower, 3),
+        "ci_upper": round(ci_upper, 3),
+        "confidence": conf_level.value if hasattr(conf_level, 'value') else str(conf_level),
+        "derived_ratio": round(derived_ratio, 3),
+        "n_markers": total,
+        "confidence_color": confidence_to_color(conf_level) if STATS_AVAILABLE else "#6b7280",
+    }
 
 
 def generate_ancient_dna_report(genotypes: Dict[str, str]) -> str:

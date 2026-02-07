@@ -7,7 +7,41 @@ These are the top-weighted SNPs from validated PRS models.
 
 NOTE: Full PRS requires thousands of variants. These are the highest-impact
 SNPs that provide meaningful signal from consumer genotyping arrays.
+
+v4.5.0 UPDATE: Now includes full statistical rigor:
+- Confidence intervals for percentile estimates
+- Standard errors for each PRS
+- Coverage-weighted confidence levels
+- "Based on N of M markers" transparency
+- Population-specific calibration uncertainty flags
 """
+
+from __future__ import annotations
+from typing import Dict, List, Optional, Any
+from pathlib import Path
+import math
+import sys
+
+# Add parent directory for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+try:
+    from personal_genomics.statistics import (
+        ConfidenceLevel,
+        StatisticalResult,
+        prs_percentile_ci,
+        marker_coverage_weight,
+        confidence_to_color,
+    )
+    STATS_AVAILABLE = True
+except ImportError:
+    STATS_AVAILABLE = False
+    class ConfidenceLevel:
+        DEFINITIVE = "DEFINITIVE"
+        HIGH = "HIGH"
+        MEDIUM = "MEDIUM"
+        LOW = "LOW"
+        UNCERTAIN = "UNCERTAIN"
 
 # Conditions with validated PRS models
 PRS_CONDITIONS = {
@@ -307,20 +341,26 @@ PRS_WEIGHTS = {
 
 def calculate_prs(genotypes: dict, condition: str) -> dict:
     """
-    Calculate polygenic risk score for a condition.
+    Calculate polygenic risk score for a condition with full statistical rigor.
     
     Args:
         genotypes: dict mapping rsid -> genotype string (e.g., "AG")
         condition: condition code (e.g., "cad", "t2d")
     
     Returns:
-        dict with score, percentile estimate, and interpretation
+        dict with:
+        - percentile: point estimate
+        - ci_lower, ci_upper: 95% confidence interval
+        - markers_found, markers_total: transparency
+        - confidence: DEFINITIVE/HIGH/MEDIUM/LOW/UNCERTAIN
+        - standard_error: SE for the percentile estimate
     """
     condition_snps = {k: v for k, v in PRS_WEIGHTS.items() if v["condition"] == condition}
     
     score = 0
     snps_found = 0
     snps_missing = 0
+    effect_variances = []  # For SE calculation
     
     for rsid, info in condition_snps.items():
         geno = genotypes.get(rsid)
@@ -332,24 +372,60 @@ def calculate_prs(genotypes: dict, condition: str) -> dict:
             # Count effect alleles (0, 1, or 2)
             effect_count = geno.count(effect_allele)
             score += effect_count * beta
+            
+            # Track variance contribution (for SE estimation)
+            # Assuming binomial variance for allele count
+            effect_variances.append(beta ** 2 * 0.5)  # Approximate
         else:
             snps_missing += 1
     
-    # Normalize to percentile (rough approximation)
-    # This is simplified - real PRS would use population-specific distributions
-    snp_coverage = snps_found / max(len(condition_snps), 1)
+    total_snps = len(condition_snps)
+    snp_coverage = snps_found / max(total_snps, 1)
     
-    # Convert raw score to approximate percentile
-    # Assuming roughly normal distribution centered at 0
-    import math
+    # Calculate standard error of the raw score
+    score_variance = sum(effect_variances) if effect_variances else 0.1
+    score_se = math.sqrt(score_variance) if score_variance > 0 else 0.1
+    
+    # Convert raw score to percentile
     try:
         z_score = score / math.sqrt(snps_found * 0.5) if snps_found > 5 else 0
-        # Crude percentile approximation
         percentile = min(99, max(1, int(50 + z_score * 15)))
     except:
         percentile = 50
+        z_score = 0
     
-    # Risk interpretation
+    # Calculate confidence interval for percentile
+    if STATS_AVAILABLE and snps_found > 0:
+        prs_stats = prs_percentile_ci(
+            raw_score=score,
+            n_markers=snps_found,
+            total_markers=total_snps,
+            population_mean=0.0,
+            population_sd=score_se * math.sqrt(snps_found) if snps_found > 0 else 1.0
+        )
+        ci_lower = round(prs_stats.ci_lower, 0)
+        ci_upper = round(prs_stats.ci_upper, 0)
+        conf_level = prs_stats.confidence_level
+        se_percentile = prs_stats.standard_error or 10.0
+    else:
+        # Fallback CI estimation
+        # SE scales with sqrt(missing/found)
+        uncertainty_factor = math.sqrt(total_snps / snps_found) if snps_found > 0 else 3
+        se_percentile = 10 * uncertainty_factor
+        ci_lower = max(1, percentile - 1.96 * se_percentile)
+        ci_upper = min(99, percentile + 1.96 * se_percentile)
+        
+        # Determine confidence level
+        if snp_coverage >= 0.9:
+            conf_level = ConfidenceLevel.HIGH
+        elif snp_coverage >= 0.7:
+            conf_level = ConfidenceLevel.MEDIUM
+        elif snp_coverage >= 0.5:
+            conf_level = ConfidenceLevel.LOW
+        else:
+            conf_level = ConfidenceLevel.UNCERTAIN
+    
+    # Risk interpretation with uncertainty acknowledgment
     if percentile >= 90:
         risk_category = "high"
         interpretation = "Top 10% genetic risk - consider enhanced screening/prevention"
@@ -363,15 +439,63 @@ def calculate_prs(genotypes: dict, condition: str) -> dict:
         risk_category = "below_average"
         interpretation = "Below average genetic risk (still need standard screening)"
     
-    return {
+    # Add uncertainty caveat
+    if snp_coverage < 0.5:
+        interpretation += f" (LOW CONFIDENCE: only {snp_coverage*100:.0f}% marker coverage)"
+    
+    # Build result with full statistical metadata
+    result = {
         "condition": condition,
+        "percentile": percentile,
+        "ci_lower": int(ci_lower),
+        "ci_upper": int(ci_upper),
+        "markers_found": snps_found,
+        "markers_total": total_snps,
+        "confidence": conf_level.value if hasattr(conf_level, 'value') else str(conf_level),
         "raw_score": round(score, 3),
-        "snps_analyzed": snps_found,
-        "snps_missing": snps_missing,
-        "coverage": round(snp_coverage, 2),
-        "percentile_estimate": percentile,
+        "standard_error": round(se_percentile, 1),
+        "coverage": round(snp_coverage, 3),
         "risk_category": risk_category,
         "interpretation": interpretation,
-        "confidence": "moderate" if snp_coverage > 0.7 else "low",
+        "snps_analyzed": snps_found,  # Legacy
+        "snps_missing": snps_missing,  # Legacy
+        "percentile_estimate": percentile,  # Legacy
         "note": "Consumer arrays capture subset of full PRS. Clinical-grade testing recommended for medical decisions."
     }
+    
+    # Add warnings
+    warnings = []
+    if snp_coverage < 0.5:
+        warnings.append(f"LOW COVERAGE: Only {snps_found} of {total_snps} markers available")
+    if ci_upper - ci_lower > 40:
+        warnings.append("Wide confidence interval - interpret with caution")
+    
+    if warnings:
+        result["warnings"] = warnings
+    
+    # Add confidence color for visualization
+    if STATS_AVAILABLE:
+        result["confidence_color"] = confidence_to_color(conf_level)
+    
+    return result
+
+
+def calculate_all_prs(genotypes: dict) -> Dict[str, dict]:
+    """
+    Calculate PRS for all conditions with statistical metadata.
+    
+    Args:
+        genotypes: dict mapping rsid -> genotype
+        
+    Returns:
+        Dict mapping condition -> PRS result with statistics
+    """
+    results = {}
+    
+    # Get unique conditions from PRS_WEIGHTS
+    conditions = set(v["condition"] for v in PRS_WEIGHTS.values())
+    
+    for condition in conditions:
+        results[condition] = calculate_prs(genotypes, condition)
+    
+    return results

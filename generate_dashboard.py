@@ -208,6 +208,82 @@ def generate_dashboard(results_file: str, output_file: str) -> None:
         .prs-card .percentile {{ font-size: 2rem; font-weight: 700; }}
         .prs-card .category {{ font-size: 0.85rem; }}
         
+        /* Statistical confidence styling */
+        .confidence-bar {{
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            margin-top: 0.5rem;
+            position: relative;
+            overflow: visible;
+        }}
+        
+        .confidence-range {{
+            position: absolute;
+            height: 100%;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }}
+        
+        .confidence-point {{
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #1e293b;
+            top: -1px;
+            transform: translateX(-50%);
+        }}
+        
+        .confidence-badge {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }}
+        
+        .confidence-DEFINITIVE {{ background: #dcfce7; color: #166534; }}
+        .confidence-HIGH {{ background: #d1fae5; color: #065f46; }}
+        .confidence-MEDIUM {{ background: #fef3c7; color: #92400e; }}
+        .confidence-LOW {{ background: #fed7aa; color: #9a3412; }}
+        .confidence-UNCERTAIN {{ background: #fee2e2; color: #991b1b; }}
+        
+        .ci-text {{
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }}
+        
+        .stat-tooltip {{
+            position: relative;
+            cursor: help;
+        }}
+        
+        .stat-tooltip:hover::after {{
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 100;
+        }}
+        
+        .prs-ci {{
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }}
+        
         .trait-tags {{
             display: flex;
             flex-wrap: wrap;
