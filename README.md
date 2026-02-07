@@ -1,19 +1,30 @@
-# Personal Genomics
+# Personal Genomics v3.0
 
-Privacy-first local DNA analysis for AI agents. Comprehensive genetic analysis with 2000+ markers covering pharmacogenomics, disease risk, carrier status, traits, and lifestyle factors.
+Privacy-first local DNA analysis for AI agents. Comprehensive genetic analysis with **1300+ validated markers** across **16 categories** covering pharmacogenomics, disease risk, carrier status, traits, mental health, rare diseases, and lifestyle factors.
 
 ![Logo](logo.svg)
 
 ## Features
 
-- **2000+ validated genetic markers** across 10 categories
-- **Polygenic Risk Scores** for 10 major conditions (CAD, T2D, cancer, Alzheimer's, etc.)
+### Core Analysis
+- **1300+ validated genetic markers** across 16 categories
+- **Polygenic Risk Scores (PRS)** for 10+ major conditions with confidence intervals
 - **Pharmacogenomics** with CPIC Level 1A drug-gene interactions
-- **Carrier screening** for 35+ recessive diseases
+- **Carrier screening** for 35+ recessive diseases including rare diseases
 - **VCF support** for whole genome/exome sequencing
 - **Agent-friendly JSON output** with priority-sorted actionable items
 - **Zero network requests** - all analysis runs locally
 - **Universal ethnic coverage** - works for all ancestries worldwide
+
+### New in v3.0
+- 🧬 **Rare Diseases** - Lysosomal storage disorders, connective tissue, neurological conditions
+- 🧠 **Mental Health** - Depression, anxiety, bipolar, ADHD, substance use genetics
+- 🌞 **Dermatology** - Skin cancer risk, psoriasis, eczema, pigmentation, aging
+- 👁️ **Vision & Hearing** - AMD, glaucoma, hearing loss, ototoxicity
+- 🤰 **Fertility** - PCOS, endometriosis, male fertility, pregnancy complications
+- 💊 **Drug Interaction Matrix** - Critical interactions, warnings, dosing adjustments
+- 🏃 **Lifestyle Recommendations Engine** - Personalized diet, exercise, supplement suggestions
+- 📚 **Interpretation Guide** - How to communicate genetic findings responsibly
 
 ## Supported Formats
 
@@ -22,7 +33,7 @@ Privacy-first local DNA analysis for AI agents. Comprehensive genetic analysis w
 - MyHeritage
 - FamilyTreeDNA
 - Nebula Genomics
-- VCF files (whole genome/exome)
+- VCF files (whole genome/exome, gzipped supported)
 - Any tab-delimited rsid format
 
 ## Installation
@@ -61,16 +72,22 @@ Reports are saved to `~/dna-analysis/reports/`:
 
 | Category | Markers | Description |
 |----------|---------|-------------|
-| Pharmacogenomics | 100+ | Drug metabolism (CYP450, DPYD, TPMT, HLA) |
-| Polygenic Risk | 150+ | Disease risk scores (CAD, T2D, cancer, etc.) |
-| Carrier Status | 35+ | Recessive disease carriers (CF, sickle cell, Tay-Sachs) |
-| Health Risks | 50+ | Disease susceptibility (APOE, Factor V, AMD) |
-| Traits | 60+ | Physical, sensory, behavioral traits |
-| Nutrition | 40+ | Nutrigenomics (MTHFR, vitamin D, caffeine) |
-| Fitness | 35+ | Athletic performance, injury risk, recovery |
-| Neurogenetics | 35+ | Cognition, behavior, mental health |
-| Longevity | 30+ | Aging and lifespan markers |
-| Immunity | 50+ | HLA, autoimmunity, infection susceptibility |
+| Pharmacogenomics | 159 | Drug metabolism (CYP450, DPYD, TPMT, HLA) |
+| Polygenic Risk | 277 | Disease risk scores (CAD, T2D, cancer, etc.) |
+| Carrier Status | 140 | Recessive disease carriers (CF, sickle cell, Tay-Sachs) |
+| Health Risks | 213 | Disease susceptibility (APOE, Factor V, AMD) |
+| Traits | 163 | Physical, sensory, behavioral traits |
+| Rare Diseases | 29 | Rare genetic conditions (lysosomal, neurological) |
+| Mental Health | 25 | Psychiatric genetics (BDNF, COMT, FKBP5) |
+| Dermatology | 37 | Skin conditions (MC1R, FLG, psoriasis) |
+| Vision & Hearing | 33 | Sensory conditions (AMD, glaucoma, hearing loss) |
+| Fertility | 31 | Reproductive health (PCOS, pregnancy risk) |
+| Nutrition | 34 | Nutrigenomics (MTHFR, vitamin D, caffeine) |
+| Fitness | 30 | Athletic performance, injury risk, recovery |
+| Neurogenetics | 28 | Cognition, behavior, mental health |
+| Longevity | 30 | Aging and lifespan markers |
+| Immunity | 43 | HLA, autoimmunity, infection susceptibility |
+| Ancestry | 78 | Population informative markers |
 
 ## Agent-Friendly Output
 
@@ -88,30 +105,36 @@ The `agent_summary.json` is designed for AI agents to quickly identify what matt
     "recommendations": [...]
   },
   "polygenic_risk_scores": {
-    "cad": {"percentile_estimate": 75, "confidence": "moderate"},
+    "cad": {"percentile_estimate": 75, "confidence": "moderate", "confidence_interval": [65, 85]},
     "t2d": {"percentile_estimate": 42, "confidence": "moderate"}
+  },
+  "lifestyle_recommendations": {
+    "diet": [...],
+    "exercise": [...],
+    "supplements": [...],
+    "avoid": [...]
+  },
+  "drug_interaction_matrix": {
+    "critical_interactions": [...],
+    "warnings": [...],
+    "dosing_adjustments": [...]
   }
 }
 ```
 
-## Pharmacogenomics Coverage
-
-Critical drug-gene pairs from CPIC guidelines:
+## Critical Pharmacogenomics
 
 | Gene | Drugs Affected | Clinical Impact |
 |------|----------------|-----------------|
-| CYP2D6 | Codeine, tramadol, tamoxifen | Prodrug activation |
-| CYP2C19 | Clopidogrel (Plavix), PPIs | Platelet inhibition |
-| CYP2C9 + VKORC1 | Warfarin | Bleeding risk |
 | DPYD | 5-FU, capecitabine | **Fatal toxicity risk** |
-| TPMT/NUDT15 | Azathioprine, 6-MP | Myelosuppression |
 | HLA-B*5701 | Abacavir | Hypersensitivity |
 | HLA-B*1502 | Carbamazepine | Stevens-Johnson Syndrome |
+| MT-RNR1 | Aminoglycosides | Irreversible deafness |
+| CYP2D6 | Codeine, tramadol | Prodrug activation |
+| CYP2C19 | Clopidogrel (Plavix) | Platelet inhibition |
 | SLCO1B1 | Simvastatin | Myopathy risk |
 
 ## Polygenic Risk Score Conditions
-
-Validated PRS models for:
 
 - Coronary Artery Disease (CAD)
 - Type 2 Diabetes (T2D)
@@ -124,15 +147,33 @@ Validated PRS models for:
 - Obesity
 - Major Depression
 
-## Data Sources
+## Interpretation Guide
 
-Markers are sourced from peer-reviewed databases:
+See `references/INTERPRETATION_GUIDE.md` for:
+- How to explain findings to users in layperson language
+- Risk communication best practices
+- When to recommend genetic counseling
+- Cultural sensitivity in ancestry discussions
+- Handling emotional responses to results
 
-- **PharmGKB** - Pharmacogenomics annotations
-- **ClinVar** - Clinical variant interpretations
-- **NHGRI-EBI GWAS Catalog** - Genome-wide associations
-- **CPIC** - Clinical Pharmacogenetics Implementation Consortium
-- **PGS Catalog** - Polygenic Score database
+## Example Outputs
+
+See `examples/` directory for:
+- `agent_summary.json` - Typical analysis output
+- `sample_high_risk.json` - High-risk individual (critical alerts)
+- `sample_carrier.json` - Multiple carrier status findings
+
+## Testing
+
+```bash
+# Install test dependencies
+pip install pytest
+
+# Run all tests
+pytest tests/ -v
+```
+
+74 comprehensive tests covering all marker modules, VCF parsing, and edge cases.
 
 ## Privacy
 
@@ -144,10 +185,11 @@ Markers are sourced from peer-reviewed databases:
 ## Limitations
 
 1. **Not diagnostic** - Results are informational, not medical diagnoses
-2. **Array limitations** - Consumer arrays capture ~0.1% of genome; rare variants missed
+2. **Array limitations** - Consumer arrays capture ~0.1% of genome; rare variants often missed
 3. **Probabilistic** - Polygenic scores indicate risk, not certainty
 4. **Environment matters** - Most conditions are 50-80% non-genetic
 5. **Population effects** - Some markers better validated in European ancestry
+6. **No structural variants** - CNVs and large deletions not detected
 
 ## Contributing
 
@@ -156,17 +198,26 @@ Contributions welcome! Please ensure new markers include:
 - rsID
 - Gene name
 - Risk/effect allele
-- Evidence level
-- Source citation
+- Evidence level (strong/moderate/preliminary)
+- Source citation (PMID or ClinVar ID)
 - Actionable recommendations (if applicable)
+
+## Data Sources
+
+- **PharmGKB** - Pharmacogenomics annotations
+- **ClinVar** - Clinical variant interpretations
+- **NHGRI-EBI GWAS Catalog** - Genome-wide associations
+- **CPIC** - Clinical Pharmacogenetics Implementation Consortium
+- **PGS Catalog** - Polygenic Score database
+- **OMIM** - Rare disease genetics
 
 ## References
 
-1. Purcell S, et al. PLINK: a tool set for whole-genome association. Am J Hum Genet. 2007;81(3):559-575.
-2. Landrum MJ, et al. ClinVar: public archive of interpretations of clinically relevant variants. Nucleic Acids Res. 2016;44(D1):D862-8.
-3. Whirl-Carrillo M, et al. Pharmacogenomics knowledge for personalized medicine. Clin Pharmacol Ther. 2012;92(4):414-7.
-4. Relling MV, Klein TE. CPIC: Clinical Pharmacogenetics Implementation Consortium. Clin Pharmacol Ther. 2011;89(3):464-7.
-5. Buniello A, et al. The NHGRI-EBI GWAS Catalog. Nucleic Acids Res. 2019;47(D1):D1005-D1012.
+1. Relling MV, Klein TE. CPIC: Clinical Pharmacogenetics Implementation Consortium. Clin Pharmacol Ther. 2011.
+2. Landrum MJ, et al. ClinVar: public archive of clinically relevant variants. Nucleic Acids Res. 2016.
+3. Buniello A, et al. The NHGRI-EBI GWAS Catalog. Nucleic Acids Res. 2019.
+4. Whirl-Carrillo M, et al. Pharmacogenomics knowledge for personalized medicine. Clin Pharmacol Ther. 2012.
+5. Lambert SA, et al. The Polygenic Score Catalog. Nat Genet. 2021.
 
 ## License
 
@@ -174,4 +225,4 @@ MIT License - See LICENSE file for details.
 
 ---
 
-**Disclaimer**: This tool is for educational and research purposes. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult qualified healthcare providers for medical decisions.
+**Disclaimer**: This tool is for educational and research purposes. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult qualified healthcare providers for medical decisions. Critical pharmacogenomic findings should be confirmed with clinical-grade testing before making treatment decisions.

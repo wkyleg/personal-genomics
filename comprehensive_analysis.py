@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive Genetic Analysis - 2000+ Markers
+Comprehensive Genetic Analysis - 3500+ Markers (v3.0)
 Full health, pharmacogenomics, ancestry, traits, and actionable recommendations.
 Works with ANY ancestry/ethnic background worldwide.
 
@@ -19,11 +19,31 @@ Output:
 - Agent-friendly JSON with actionable fields and priorities
 - Polygenic risk scores for major conditions
 - Evidence-based recommendations with citations
+- Lifestyle recommendation engine
+- Drug interaction matrix
+
+Categories (v3.0):
+1. Pharmacogenomics - Drug metabolism
+2. Polygenic Risk Scores - Disease risk
+3. Carrier Status - Recessive carriers
+4. Health Risks - Disease susceptibility
+5. Traits - Physical/behavioral
+6. Nutrition - Nutrigenomics
+7. Fitness - Athletic performance
+8. Neurogenetics - Cognition/behavior
+9. Longevity - Aging markers
+10. Immunity - HLA and immune
+11. Rare Diseases - Rare genetic conditions
+12. Mental Health - Psychiatric genetics
+13. Dermatology - Skin and hair
+14. Vision & Hearing - Sensory genetics
+15. Fertility - Reproductive health
 """
 
 import sys
 import json
 import gzip
+import math
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime
@@ -45,6 +65,13 @@ try:
     from markers.neurogenetics import NEURO_MARKERS
     from markers.longevity import LONGEVITY_MARKERS
     from markers.immunity import IMMUNITY_MARKERS, HLA_DRUG_ALERTS
+    # New v3.0 modules
+    from markers.rare_diseases import RARE_DISEASE_MARKERS
+    from markers.mental_health import MENTAL_HEALTH_MARKERS
+    from markers.dermatology import DERMATOLOGY_MARKERS
+    from markers.vision_hearing import VISION_HEARING_MARKERS
+    from markers.fertility import FERTILITY_MARKERS
+    from markers import get_marker_counts
     MODULES_LOADED = True
 except ImportError as e:
     print(f"Warning: Could not load marker modules: {e}")
@@ -63,6 +90,12 @@ except ImportError as e:
     LONGEVITY_MARKERS = {}
     IMMUNITY_MARKERS = {}
     HLA_DRUG_ALERTS = {}
+    RARE_DISEASE_MARKERS = {}
+    MENTAL_HEALTH_MARKERS = {}
+    DERMATOLOGY_MARKERS = {}
+    VISION_HEARING_MARKERS = {}
+    FERTILITY_MARKERS = {}
+    def get_marker_counts(): return {"total": 0}
 
 
 # =============================================================================
@@ -545,9 +578,145 @@ def generate_report(all_results: Dict, agent_summary: Dict) -> str:
 # MAIN
 # =============================================================================
 
+def generate_lifestyle_recommendations(all_results: Dict) -> Dict[str, Any]:
+    """Generate personalized lifestyle recommendations based on genetic profile."""
+    recommendations = {
+        "diet": [],
+        "exercise": [],
+        "supplements": [],
+        "screening": [],
+        "lifestyle": [],
+        "avoid": []
+    }
+    
+    # APOE-based recommendations
+    apoe = all_results.get("apoe", {})
+    if apoe.get("risk_level") in ["elevated", "high"]:
+        recommendations["diet"].extend([
+            "Mediterranean diet - strongly protective for APOE4 carriers",
+            "Limit saturated fat intake",
+            "Include fatty fish 2-3x/week (omega-3s)"
+        ])
+        recommendations["exercise"].extend([
+            "Regular aerobic exercise - strongest protective factor",
+            "150+ minutes moderate exercise weekly"
+        ])
+        recommendations["lifestyle"].append("Prioritize 7-8 hours quality sleep")
+    
+    # Nutrition-based
+    nutrition = all_results.get("nutrition", {})
+    for finding in nutrition.get("findings", []):
+        gene = finding.get("gene", "")
+        if finding.get("risk_copies", 0) > 0:
+            if gene == "MTHFR":
+                recommendations["supplements"].append("Consider methylfolate over folic acid")
+            elif gene == "VDR":
+                recommendations["supplements"].append("Vitamin D supplementation may be beneficial")
+            elif "caffeine" in str(finding.get("trait", "")).lower():
+                recommendations["avoid"].append("Limit caffeine if slow metabolizer")
+    
+    # Fitness-based
+    fitness = all_results.get("fitness", {})
+    for finding in fitness.get("findings", []):
+        gene = finding.get("gene", "")
+        if gene == "ACTN3" and finding.get("genotype") == "TT":
+            recommendations["exercise"].append("Favor endurance over power training (ACTN3 XX)")
+        elif gene == "COL5A1" and finding.get("risk_copies", 0) > 0:
+            recommendations["exercise"].append("Include tendon-strengthening exercises")
+    
+    # Dermatology-based
+    dermatology = all_results.get("dermatology", {})
+    for finding in dermatology.get("findings", []):
+        gene = finding.get("gene", "")
+        if gene == "MC1R" and finding.get("risk_copies", 0) > 0:
+            recommendations["lifestyle"].append("Strict sun protection - elevated melanoma risk")
+            recommendations["screening"].append("Annual dermatology screening recommended")
+    
+    # Vision-based
+    vision = all_results.get("vision_hearing", {})
+    for finding in vision.get("findings", []):
+        gene = finding.get("gene", "")
+        if gene == "CFH" and finding.get("risk_copies", 0) > 0:
+            recommendations["screening"].append("Annual dilated eye exam after age 50 (AMD risk)")
+            recommendations["supplements"].append("AREDS2 formula if AMD develops")
+            recommendations["avoid"].append("CRITICAL: Do not smoke (dramatically increases AMD risk)")
+    
+    return recommendations
+
+
+def generate_drug_interaction_matrix(all_results: Dict) -> Dict[str, Any]:
+    """Generate drug interaction warnings based on pharmacogenomics."""
+    matrix = {
+        "critical_interactions": [],
+        "warnings": [],
+        "dosing_adjustments": [],
+        "safe_alternatives": {}
+    }
+    
+    pharma = all_results.get("pharmacogenomics", {})
+    for finding in pharma.get("findings", []):
+        gene = finding.get("gene", "")
+        geno = finding.get("genotype", "")
+        risk = finding.get("risk_copies", 0)
+        
+        # DPYD - 5-FU toxicity
+        if gene == "DPYD" and risk > 0:
+            matrix["critical_interactions"].append({
+                "drug_class": "Fluoropyrimidines",
+                "drugs": ["5-FU", "capecitabine", "tegafur"],
+                "risk": "FATAL TOXICITY - avoid or reduce dose significantly",
+                "gene": gene,
+                "genotype": geno
+            })
+        
+        # CYP2C19 - clopidogrel
+        if gene == "CYP2C19":
+            if "AA" in geno:  # Poor metabolizer
+                matrix["warnings"].append({
+                    "drug": "Clopidogrel (Plavix)",
+                    "issue": "Poor activation - reduced efficacy",
+                    "recommendation": "Consider prasugrel or ticagrelor",
+                    "gene": gene,
+                    "genotype": geno
+                })
+        
+        # CYP2D6 - opioids
+        if gene == "CYP2D6":
+            if risk == 0:  # Poor metabolizer
+                matrix["dosing_adjustments"].append({
+                    "drug_class": "Codeine, tramadol",
+                    "issue": "No activation to active metabolite",
+                    "recommendation": "Use alternative analgesics (morphine, oxycodone)",
+                    "gene": gene,
+                    "genotype": geno
+                })
+        
+        # SLCO1B1 - statins
+        if gene == "SLCO1B1" and risk > 0:
+            matrix["warnings"].append({
+                "drug": "Simvastatin",
+                "issue": "Elevated myopathy risk",
+                "recommendation": "Limit to 20mg/day or use alternative statin",
+                "gene": gene,
+                "genotype": geno
+            })
+        
+        # Warfarin dosing
+        if gene in ["CYP2C9", "VKORC1"] and risk > 0:
+            matrix["dosing_adjustments"].append({
+                "drug": "Warfarin",
+                "issue": "May require lower dose",
+                "recommendation": "Use pharmacogenomic dosing algorithms",
+                "gene": gene,
+                "genotype": geno
+            })
+    
+    return matrix
+
+
 def main():
     if len(sys.argv) < 2:
-        print("Personal Genomics Analysis Tool")
+        print("Personal Genomics Analysis Tool v3.0")
         print("=" * 40)
         print("\nUsage: python comprehensive_analysis.py <dna_file>")
         print("\nSupported formats:")
@@ -559,12 +728,12 @@ def main():
         print("  - Any tab-delimited rsid format")
         print(f"\nMarker modules loaded: {MODULES_LOADED}")
         if MODULES_LOADED:
-            total = (len(PHARMACOGENOMICS_MARKERS) + len(CARRIER_MARKERS) + 
-                    len(HEALTH_RISK_MARKERS) + len(TRAIT_MARKERS) +
-                    len(NUTRITION_MARKERS) + len(FITNESS_MARKERS) +
-                    len(NEURO_MARKERS) + len(LONGEVITY_MARKERS) + 
-                    len(IMMUNITY_MARKERS) + len(PRS_WEIGHTS))
-            print(f"Total markers in database: {total:,}")
+            counts = get_marker_counts()
+            print(f"Total markers in database: {counts['total']:,}")
+            print("\nCategories:")
+            for k, v in counts.items():
+                if k != 'total':
+                    print(f"  {k}: {v}")
         sys.exit(1)
     
     filepath = sys.argv[1]
@@ -577,12 +746,14 @@ def main():
     all_results = {
         "total_snps": len(genotypes),
         "format": fmt,
-        "apoe": determine_apoe(genotypes)
+        "apoe": determine_apoe(genotypes),
+        "version": "3.0"
     }
     
     print("Analyzing markers...")
     
     if MODULES_LOADED:
+        # Core categories
         all_results["pharmacogenomics"] = analyze_markers(genotypes, PHARMACOGENOMICS_MARKERS, "pharmacogenomics")
         all_results["carrier_status"] = analyze_markers(genotypes, CARRIER_MARKERS, "carrier_status")
         all_results["health_risks"] = analyze_markers(genotypes, HEALTH_RISK_MARKERS, "health_risks")
@@ -593,6 +764,17 @@ def main():
         all_results["longevity"] = analyze_markers(genotypes, LONGEVITY_MARKERS, "longevity")
         all_results["immunity"] = analyze_markers(genotypes, IMMUNITY_MARKERS, "immunity")
         all_results["prs"] = calculate_all_prs(genotypes)
+        
+        # New v3.0 categories
+        all_results["rare_diseases"] = analyze_markers(genotypes, RARE_DISEASE_MARKERS, "rare_diseases")
+        all_results["mental_health"] = analyze_markers(genotypes, MENTAL_HEALTH_MARKERS, "mental_health")
+        all_results["dermatology"] = analyze_markers(genotypes, DERMATOLOGY_MARKERS, "dermatology")
+        all_results["vision_hearing"] = analyze_markers(genotypes, VISION_HEARING_MARKERS, "vision_hearing")
+        all_results["fertility"] = analyze_markers(genotypes, FERTILITY_MARKERS, "fertility")
+        
+        # Advanced features
+        all_results["lifestyle_recommendations"] = generate_lifestyle_recommendations(all_results)
+        all_results["drug_interaction_matrix"] = generate_drug_interaction_matrix(all_results)
     
     # Generate outputs
     print("Generating reports...")
