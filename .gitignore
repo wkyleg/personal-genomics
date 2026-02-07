@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# DNA data files (NEVER commit these!)
+*.txt
+!requirements.txt
+*.ped
+*.map
+*.bed
+*.bim
+*.fam
+*.vcf
+*.vcf.gz
+raw_data*
+*_dna.txt
+genome_*.txt
+AncestryDNA*.txt
+
+# Reports (contain personal data)
+reports/
+*.json
+!snp_databases/*.json
+!haplogroup_markers.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# PLINK output
+*.nosex
+*.het
+*.hom
+*.irem
