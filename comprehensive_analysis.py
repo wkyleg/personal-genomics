@@ -650,7 +650,7 @@ def infer_apoe_status(df) -> Dict[str, Any]:
     rs7412 = get_genotype(df, 'rs7412')
     
     if not rs429358 or not rs7412:
-        return {"status": "unknown", "risk_level": "unknown"}
+        return {"genotype": "unknown", "risk_level": "unknown", "rs429358": rs429358, "rs7412": rs7412, "actionable": False}
     
     # APOE determination
     # ε2: rs429358=T, rs7412=T
