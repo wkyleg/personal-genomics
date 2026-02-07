@@ -5,6 +5,42 @@ All notable changes to the Personal Genomics skill will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.1] - 2026-02-07
+
+### Fixed
+
+#### Ancient DNA Matching - MAJOR SNP Expansion
+- **BREAKING FIX**: Expanded from ~11 total SNPs to 41 unique SNPs across 32 ancient individuals
+- Each ancient individual now has 27-41 SNPs (up from 4-9)
+- 38 SNPs now overlap with AncestryDNA data (up from 4-5)
+- Similarity scores now vary meaningfully (62%-78% range vs. meaningless "100%")
+
+#### Confidence Levels Added
+- **High confidence** (🟢): 30+ shared SNPs - strong statistical power
+- **Medium confidence** (🟡): 20-29 shared SNPs - good for patterns  
+- **Low confidence** (🟠): 10-19 shared SNPs - interpret with caution
+- Confidence displayed prominently on all match cards and culture affinities
+
+#### Dashboard Updates
+- Match cards now show "X/Y identical" instead of just percentage
+- Confidence emoji (🟢🟡🟠🔴) displayed on each card
+- Culture affinities show SNP range and sample size (n=X)
+- Removed misleading "similarity" label, replaced with actual counts
+
+#### Expanded SNP Categories
+- **Pigmentation**: rs1426654, rs16891982, rs12913832, rs1042602, rs1800407, rs12896399, rs7495174, rs4778138, rs1393350, rs6119471, rs12203592, rs2733832, rs1800414
+- **Hair/MC1R**: rs1805007, rs1805008, rs1805005, rs1805006, rs2228479, rs11547464, rs885479
+- **Diet/metabolism**: rs4988235, rs182549, rs174546
+- **Morphology**: rs3827760, rs17822931, rs260690, rs10843090
+- **Ancestry-informative**: rs2814778, rs10962599, rs7657799, rs4833103, rs2891
+- **Misc phenotype**: rs671, rs1229984, rs4680, rs1799971, rs6265, rs4570625, rs53576
+
+### Changed
+- `ancient_individuals.json` completely rebuilt with accurate population-typical genotypes
+- `ancient_matching.py` rewritten with confidence scoring system
+- Weighted scoring now applies to 11 ancestry-informative SNPs
+- Results now ranked by percentile across all 32 ancient individuals
+
 ## [4.4.0] - 2026-02-07
 
 ### Added

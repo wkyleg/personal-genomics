@@ -1419,7 +1419,22 @@ def analyze_dna_file(
         
         # Ancient Individual Matching (YourTrueAncestry alternative)
         try:
-            all_results["ancient_matches"] = get_ancient_matches_json(genotypes)
+            ancient_matches = get_ancient_matches_json(genotypes)
+            
+            # Add premium features
+            try:
+                from markers.ancient_premium import get_premium_ancient_analysis
+                matches_for_premium = ancient_matches.get("all_matches", ancient_matches.get("top_matches", []))
+                user_haplogroups = all_results.get("haplogroups", {})
+                ancient_matches["premium"] = get_premium_ancient_analysis(
+                    genotypes, matches_for_premium, user_haplogroups
+                )
+            except ImportError:
+                logger.debug("Premium ancient features not available")
+            except Exception as pe:
+                logger.debug(f"Premium ancient features error: {pe}")
+            
+            all_results["ancient_matches"] = ancient_matches
         except Exception as e:
             logger.warning(f"Could not run ancient DNA matching: {e}")
             all_results["ancient_matches"] = {}
