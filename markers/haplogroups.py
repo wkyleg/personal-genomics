@@ -7,11 +7,51 @@ Sources:
 - ISOGG Y-DNA Haplogroup Tree - https://isogg.org/tree/
 - Published phylogenetic studies
 
-Note: Consumer arrays only capture a subset of defining markers.
-Full haplogroup resolution requires WGS or specialized tests.
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ⚠️  IMPORTANT LIMITATION - CONSUMER ARRAY DATA                              ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  Consumer DNA arrays (23andMe, AncestryDNA, etc.) capture only a SMALL       ║
+║  SUBSET of haplogroup-defining markers. These results are:                   ║
+║                                                                              ║
+║  • LOW CONFIDENCE - indicative only, not definitive                          ║
+║  • LIMITED RESOLUTION - cannot determine deep subclades                       ║
+║  • POTENTIALLY INCORRECT - missing markers can lead to misclassification     ║
+║                                                                              ║
+║  For accurate haplogroup determination, use dedicated testing:               ║
+║  • Y-DNA: FTDNA Y-37/Y-111/Big Y, YFull, Nebula WGS                         ║
+║  • mtDNA: FTDNA mtDNA Full Sequence, YFull, Nebula WGS                      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PMIDs:
+- van Oven M, Kayser M. 2009. Updated comprehensive phylogenetic tree of global 
+  human mtDNA variation. PMID: 19165223
+- Karafet TM et al. 2008. New binary polymorphisms reshape Y-chromosome haplogroup 
+  tree. PMID: 18285812
+- Poznik GD et al. 2016. Punctuated bursts in human male demography. PMID: 27654910
 """
 
 from typing import Dict, List, Optional, Any, Tuple
+
+# Disclaimer text for all haplogroup output
+HAPLOGROUP_DISCLAIMER = """
+⚠️ CONSUMER ARRAY LIMITATION - LOW CONFIDENCE RESULT
+
+This haplogroup call is based on LIMITED markers from a consumer DNA array.
+Consumer arrays cannot reliably determine haplogroups because:
+
+1. They test only ~20-50 haplogroup markers (vs thousands defining the tree)
+2. Missing branch-defining SNPs can cause misclassification
+3. Resolution is limited to major haplogroups only (no subclades)
+
+CONFIDENCE LEVEL: LOW - INDICATIVE ONLY
+
+For accurate, verified haplogroup determination:
+• Y-DNA: FTDNA Big Y-700, YFull WGS analysis
+• mtDNA: FTDNA mtDNA Full Sequence, YFull mtDNA
+• Both: Whole genome sequencing (Nebula, Dante Labs)
+
+Do not rely on these results for genealogical research or family matching.
+"""
 
 # =============================================================================
 # MITOCHONDRIAL DNA (mtDNA) HAPLOGROUPS - MATERNAL LINEAGE
@@ -20,6 +60,7 @@ from typing import Dict, List, Optional, Any, Tuple
 MTDNA_MARKERS = {
     # Major defining SNPs for mtDNA haplogroups
     # Format: rsid -> {haplogroup, position, ref, alt, branch_defining}
+    # PMIDs: 19165223 (PhyloTree), 18498415 (mtDNA phylogeny)
     
     # Haplogroup L (African origin - all humans descend from)
     "rs2853499": {
@@ -27,7 +68,8 @@ MTDNA_MARKERS = {
         "haplogroup": "L3",
         "branch": "L3 and descendants",
         "alleles": {"G": "L3+", "A": "root"},
-        "significance": "ancestral_branch"
+        "significance": "ancestral_branch",
+        "pmid": ["19165223"]
     },
     
     # Haplogroup M - Out of Africa (Asia, Americas)
@@ -36,7 +78,8 @@ MTDNA_MARKERS = {
         "haplogroup": "M/N indicator",
         "branch": "Macrohaplogroup split",
         "alleles": {"G": "M_branch", "A": "N_branch"},
-        "note": "Major split in human migration"
+        "note": "Major split in human migration",
+        "pmid": ["19165223", "18498415"]
     },
     
     # Haplogroup N - Out of Africa (Europe, West Asia, partial Americas)
@@ -44,7 +87,8 @@ MTDNA_MARKERS = {
         "position": "m.8701A>G",
         "haplogroup": "N",
         "branch": "Macrohaplogroup N",
-        "alleles": {"G": "N+"}
+        "alleles": {"G": "N+"},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup R - Derived from N (Europe, South Asia)
@@ -52,7 +96,8 @@ MTDNA_MARKERS = {
         "position": "m.12705C>T",
         "haplogroup": "R",
         "branch": "Haplogroup R",
-        "alleles": {"T": "R+"}
+        "alleles": {"T": "R+"},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup H - Most common European (~40-50%)
@@ -61,13 +106,15 @@ MTDNA_MARKERS = {
         "haplogroup": "H",
         "branch": "Haplogroup H",
         "alleles": {"C": "H+", "T": "non-H"},
-        "frequency": {"Europe": 0.45, "Middle East": 0.20}
+        "frequency": {"Europe": 0.45, "Middle East": 0.20},
+        "pmid": ["19165223", "12730389"]
     },
     "rs2853512": {
         "position": "m.2706A>G",
         "haplogroup": "H",
         "branch": "H confirmation",
-        "alleles": {"A": "H+"}
+        "alleles": {"A": "H+"},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup V - European (Basque, Scandinavian)
@@ -76,7 +123,8 @@ MTDNA_MARKERS = {
         "haplogroup": "V",
         "branch": "Haplogroup V",
         "alleles": {"A": "V+"},
-        "frequency": {"Basque": 0.12, "Scandinavia": 0.06}
+        "frequency": {"Basque": 0.12, "Scandinavia": 0.06},
+        "pmid": ["19165223", "10839820"]
     },
     
     # Haplogroup U - European, West Asian
@@ -84,13 +132,15 @@ MTDNA_MARKERS = {
         "position": "m.11467A>G",
         "haplogroup": "U",
         "branch": "Haplogroup U",
-        "alleles": {"G": "U+"}
+        "alleles": {"G": "U+"},
+        "pmid": ["19165223"]
     },
     "rs28359178": {
         "position": "m.12308A>G",
         "haplogroup": "U",
         "branch": "U confirmation",
-        "alleles": {"G": "U+"}
+        "alleles": {"G": "U+"},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup K - European (Ashkenazi Jewish enriched)
@@ -99,7 +149,8 @@ MTDNA_MARKERS = {
         "haplogroup": "K",
         "branch": "Haplogroup K (U8b)",
         "alleles": {"A": "K+"},
-        "frequency": {"Ashkenazi": 0.32, "Europe": 0.06}
+        "frequency": {"Ashkenazi": 0.32, "Europe": 0.06},
+        "pmid": ["19165223", "16689639"]
     },
     
     # Haplogroup J - European, Middle Eastern
@@ -108,13 +159,15 @@ MTDNA_MARKERS = {
         "haplogroup": "J",
         "branch": "Haplogroup J",
         "alleles": {"T": "J+"},
-        "frequency": {"Europe": 0.09, "Middle East": 0.12}
+        "frequency": {"Europe": 0.09, "Middle East": 0.12},
+        "pmid": ["19165223"]
     },
     "rs2853505": {
         "position": "m.489T>C",
         "haplogroup": "J",
         "branch": "J confirmation",
-        "alleles": {"C": "J+"}
+        "alleles": {"C": "J+"},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup T - European, Middle Eastern
@@ -123,7 +176,8 @@ MTDNA_MARKERS = {
         "haplogroup": "T",
         "branch": "Haplogroup T",
         "alleles": {"A": "T+"},
-        "frequency": {"Europe": 0.09}
+        "frequency": {"Europe": 0.09},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup I - European (Scandinavian)
@@ -132,7 +186,8 @@ MTDNA_MARKERS = {
         "haplogroup": "I",
         "branch": "Haplogroup I",
         "alleles": {"C": "I+"},
-        "frequency": {"Scandinavia": 0.04}
+        "frequency": {"Scandinavia": 0.04},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup W - European, West Asian
@@ -140,7 +195,8 @@ MTDNA_MARKERS = {
         "position": "m.1243T>C",
         "haplogroup": "W",
         "branch": "Haplogroup W",
-        "alleles": {"C": "W+"}
+        "alleles": {"C": "W+"},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup X - Native American (minor), European
@@ -149,7 +205,8 @@ MTDNA_MARKERS = {
         "haplogroup": "X",
         "branch": "Haplogroup X",
         "alleles": {"A": "X+"},
-        "frequency": {"Native American": 0.03, "Europe": 0.02}
+        "frequency": {"Native American": 0.03, "Europe": 0.02},
+        "pmid": ["19165223", "12547090"]
     },
     
     # Haplogroup A - East Asian, Native American
@@ -158,7 +215,8 @@ MTDNA_MARKERS = {
         "haplogroup": "A",
         "branch": "Haplogroup A",
         "alleles": {"G": "A+"},
-        "frequency": {"East Asia": 0.10, "Native American": 0.25}
+        "frequency": {"East Asia": 0.10, "Native American": 0.25},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup B - East Asian, Polynesian, Native American
@@ -167,7 +225,8 @@ MTDNA_MARKERS = {
         "haplogroup": "B",
         "branch": "Haplogroup B",
         "alleles": {"del": "B+"},
-        "frequency": {"Polynesia": 0.90, "Native American": 0.20}
+        "frequency": {"Polynesia": 0.90, "Native American": 0.20},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup C - East Asian, Native American
@@ -176,7 +235,8 @@ MTDNA_MARKERS = {
         "haplogroup": "C",
         "branch": "Haplogroup C",
         "alleles": {"C": "C+"},
-        "frequency": {"Native American": 0.30, "East Asia": 0.15}
+        "frequency": {"Native American": 0.30, "East Asia": 0.15},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup D - East Asian, Native American
@@ -185,7 +245,8 @@ MTDNA_MARKERS = {
         "haplogroup": "D",
         "branch": "Haplogroup D",
         "alleles": {"A": "D+"},
-        "frequency": {"East Asia": 0.25, "Native American": 0.20}
+        "frequency": {"East Asia": 0.25, "Native American": 0.20},
+        "pmid": ["19165223"]
     },
     
     # Haplogroup F - East Asian
@@ -194,7 +255,8 @@ MTDNA_MARKERS = {
         "haplogroup": "F",
         "branch": "Haplogroup F",
         "alleles": {"A": "F+"},
-        "frequency": {"Southeast Asia": 0.20}
+        "frequency": {"Southeast Asia": 0.20},
+        "pmid": ["19165223"]
     },
     
     # African haplogroups
@@ -204,7 +266,8 @@ MTDNA_MARKERS = {
         "haplogroup": "L0",
         "branch": "Haplogroup L0",
         "alleles": {"T": "L0+"},
-        "frequency": {"Khoisan": 0.60}
+        "frequency": {"Khoisan": 0.60},
+        "pmid": ["19165223", "20705718"]
     },
     
     # L1 - African
@@ -213,7 +276,8 @@ MTDNA_MARKERS = {
         "haplogroup": "L1",
         "branch": "Haplogroup L1",
         "alleles": {"A": "L1+"},
-        "frequency": {"Central Africa": 0.30}
+        "frequency": {"Central Africa": 0.30},
+        "pmid": ["19165223"]
     },
     
     # L2 - Most common African haplogroup
@@ -222,7 +286,8 @@ MTDNA_MARKERS = {
         "haplogroup": "L2",
         "branch": "Haplogroup L2",
         "alleles": {"C": "L2+"},
-        "frequency": {"West Africa": 0.35, "African American": 0.30}
+        "frequency": {"West Africa": 0.35, "African American": 0.30},
+        "pmid": ["19165223"]
     },
 }
 
@@ -233,6 +298,7 @@ MTDNA_MARKERS = {
 YCHROMOSOME_MARKERS = {
     # Major Y-DNA haplogroup defining SNPs
     # These require Y-chromosome coverage (males only)
+    # PMIDs: 18285812 (Y tree), 27654910 (Y phylogeny)
     
     # Haplogroup A - Oldest Y lineage (African)
     "rs2032658": {
@@ -243,7 +309,8 @@ YCHROMOSOME_MARKERS = {
         "alleles": {"T": "A+"},
         "sex": "male",
         "origin": "Africa",
-        "age_kya": 270  # thousands of years ago
+        "age_kya": 270,
+        "pmid": ["18285812"]
     },
     
     # Haplogroup B - African
@@ -255,7 +322,8 @@ YCHROMOSOME_MARKERS = {
         "alleles": {"T": "B+"},
         "sex": "male",
         "origin": "Africa",
-        "age_kya": 75
+        "age_kya": 75,
+        "pmid": ["18285812"]
     },
     
     # Haplogroup E - African, spread to Mediterranean
@@ -268,7 +336,8 @@ YCHROMOSOME_MARKERS = {
         "sex": "male",
         "origin": "Africa",
         "age_kya": 65,
-        "frequency": {"Africa": 0.60, "Middle East": 0.20, "Europe": 0.10}
+        "frequency": {"Africa": 0.60, "Middle East": 0.20, "Europe": 0.10},
+        "pmid": ["18285812", "21481273"]
     },
     "rs9306841": {
         "gene": "Y",
@@ -277,7 +346,8 @@ YCHROMOSOME_MARKERS = {
         "branch": "E1b1b (E-M35)",
         "alleles": {"C": "E1b1b+"},
         "sex": "male",
-        "note": "Common in Mediterranean, Near East"
+        "note": "Common in Mediterranean, Near East",
+        "pmid": ["18285812"]
     },
     
     # Haplogroup C - Asia, Oceania, Americas
@@ -290,7 +360,8 @@ YCHROMOSOME_MARKERS = {
         "sex": "male",
         "origin": "Asia",
         "age_kya": 60,
-        "frequency": {"Mongolia": 0.50, "Australia": 0.60}
+        "frequency": {"Mongolia": 0.50, "Australia": 0.60},
+        "pmid": ["18285812"]
     },
     
     # Haplogroup D - East Asia (Tibetan, Japanese)
@@ -302,7 +373,8 @@ YCHROMOSOME_MARKERS = {
         "alleles": {"T": "D+"},
         "sex": "male",
         "origin": "Asia",
-        "frequency": {"Tibet": 0.50, "Japan": 0.35}
+        "frequency": {"Tibet": 0.50, "Japan": 0.35},
+        "pmid": ["18285812"]
     },
     
     # Haplogroup G - Caucasus, Mediterranean
@@ -315,7 +387,8 @@ YCHROMOSOME_MARKERS = {
         "sex": "male",
         "origin": "Caucasus",
         "age_kya": 50,
-        "frequency": {"Georgia": 0.60, "Italy": 0.10}
+        "frequency": {"Georgia": 0.60, "Italy": 0.10},
+        "pmid": ["18285812", "22232597"]
     },
     
     # Haplogroup I - European (especially Scandinavian)
@@ -328,7 +401,8 @@ YCHROMOSOME_MARKERS = {
         "sex": "male",
         "origin": "Europe",
         "age_kya": 40,
-        "frequency": {"Scandinavia": 0.40, "Balkans": 0.40}
+        "frequency": {"Scandinavia": 0.40, "Balkans": 0.40},
+        "pmid": ["18285812", "21058503"]
     },
     "rs17316180": {
         "gene": "Y",
@@ -337,7 +411,8 @@ YCHROMOSOME_MARKERS = {
         "branch": "I1 (Scandinavian)",
         "alleles": {"C": "I1+"},
         "sex": "male",
-        "frequency": {"Scandinavia": 0.35, "Germany": 0.20}
+        "frequency": {"Scandinavia": 0.35, "Germany": 0.20},
+        "pmid": ["18285812"]
     },
     "rs9341302": {
         "gene": "Y",
@@ -346,7 +421,8 @@ YCHROMOSOME_MARKERS = {
         "branch": "I2 (Balkan/Sardinian)",
         "alleles": {"A": "I2+"},
         "sex": "male",
-        "frequency": {"Balkans": 0.40, "Sardinia": 0.40}
+        "frequency": {"Balkans": 0.40, "Sardinia": 0.40},
+        "pmid": ["18285812"]
     },
     
     # Haplogroup J - Middle East, Mediterranean, Jewish
@@ -359,7 +435,8 @@ YCHROMOSOME_MARKERS = {
         "sex": "male",
         "origin": "Middle East",
         "age_kya": 45,
-        "frequency": {"Middle East": 0.40, "Ashkenazi": 0.25}
+        "frequency": {"Middle East": 0.40, "Ashkenazi": 0.25},
+        "pmid": ["18285812", "25079122"]
     },
     "rs9341296": {
         "gene": "Y",
@@ -368,7 +445,8 @@ YCHROMOSOME_MARKERS = {
         "branch": "J1 (Arabian/Jewish Cohen)",
         "alleles": {"T": "J1+"},
         "sex": "male",
-        "frequency": {"Arabia": 0.40, "Jewish": 0.15}
+        "frequency": {"Arabia": 0.40, "Jewish": 0.15},
+        "pmid": ["18285812"]
     },
     "rs2032639": {
         "gene": "Y",
@@ -377,7 +455,8 @@ YCHROMOSOME_MARKERS = {
         "branch": "J2 (Mediterranean/Fertile Crescent)",
         "alleles": {"T": "J2+"},
         "sex": "male",
-        "frequency": {"Greece": 0.25, "Italy": 0.20}
+        "frequency": {"Greece": 0.25, "Italy": 0.20},
+        "pmid": ["18285812"]
     },
     
     # Haplogroup N - Uralic, Siberian, Baltic
@@ -389,7 +468,8 @@ YCHROMOSOME_MARKERS = {
         "alleles": {"A": "N+"},
         "sex": "male",
         "origin": "Siberia",
-        "frequency": {"Finland": 0.60, "Yakutia": 0.90}
+        "frequency": {"Finland": 0.60, "Yakutia": 0.90},
+        "pmid": ["18285812"]
     },
     
     # Haplogroup O - East Asian
@@ -402,7 +482,8 @@ YCHROMOSOME_MARKERS = {
         "sex": "male",
         "origin": "East Asia",
         "age_kya": 35,
-        "frequency": {"China": 0.75, "Japan": 0.55}
+        "frequency": {"China": 0.75, "Japan": 0.55},
+        "pmid": ["18285812"]
     },
     
     # Haplogroup Q - Native American, Siberian
@@ -414,7 +495,8 @@ YCHROMOSOME_MARKERS = {
         "alleles": {"T": "Q+"},
         "sex": "male",
         "origin": "Central Asia",
-        "frequency": {"Native American": 0.90, "Siberia": 0.25}
+        "frequency": {"Native American": 0.90, "Siberia": 0.25},
+        "pmid": ["18285812", "12740896"]
     },
     
     # Haplogroup R - Europe, South Asia
@@ -426,7 +508,8 @@ YCHROMOSOME_MARKERS = {
         "alleles": {"A": "R+"},
         "sex": "male",
         "origin": "Central Asia",
-        "age_kya": 30
+        "age_kya": 30,
+        "pmid": ["18285812", "25941402"]
     },
     "rs9786139": {
         "gene": "Y",
@@ -435,7 +518,8 @@ YCHROMOSOME_MARKERS = {
         "branch": "R1a (Indo-European spread)",
         "alleles": {"C": "R1a+"},
         "sex": "male",
-        "frequency": {"Poland": 0.55, "India": 0.35, "Russia": 0.45}
+        "frequency": {"Poland": 0.55, "India": 0.35, "Russia": 0.45},
+        "pmid": ["18285812", "25941402"]
     },
     "rs9786076": {
         "gene": "Y",
@@ -444,7 +528,8 @@ YCHROMOSOME_MARKERS = {
         "branch": "R1b (Western European)",
         "alleles": {"C": "R1b+"},
         "sex": "male",
-        "frequency": {"Ireland": 0.80, "Spain": 0.65, "France": 0.55}
+        "frequency": {"Ireland": 0.80, "Spain": 0.65, "France": 0.55},
+        "pmid": ["18285812", "25941402"]
     },
     
     # Haplogroup T - Mediterranean, East African
@@ -455,7 +540,8 @@ YCHROMOSOME_MARKERS = {
         "branch": "Haplogroup T",
         "alleles": {"T": "T+"},
         "sex": "male",
-        "frequency": {"Somalia": 0.10, "Fulani": 0.18}
+        "frequency": {"Somalia": 0.10, "Fulani": 0.18},
+        "pmid": ["18285812"]
     },
 }
 
@@ -475,7 +561,8 @@ HAPLOGROUP_HISTORY = {
             "Represents deepest branch of human maternal ancestry",
             "Did not participate in Out of Africa migration"
         ],
-        "modern_distribution": "Southern Africa (Khoisan), East Africa"
+        "modern_distribution": "Southern Africa (Khoisan), East Africa",
+        "pmid": ["19165223", "20705718"]
     },
     "L1": {
         "type": "mtDNA",
@@ -486,7 +573,8 @@ HAPLOGROUP_HISTORY = {
             "Common in Central African populations",
             "Some subclades associated with Bantu expansion"
         ],
-        "modern_distribution": "Central and West Africa"
+        "modern_distribution": "Central and West Africa",
+        "pmid": ["19165223"]
     },
     "L2": {
         "type": "mtDNA",
@@ -497,7 +585,8 @@ HAPLOGROUP_HISTORY = {
             "Expanded with Bantu migrations",
             "High frequency in African diaspora due to slave trade"
         ],
-        "modern_distribution": "West Africa, African Americans"
+        "modern_distribution": "West Africa, African Americans",
+        "pmid": ["19165223"]
     },
     "L3": {
         "type": "mtDNA",
@@ -508,7 +597,8 @@ HAPLOGROUP_HISTORY = {
             "Source of the Out of Africa migration ~60-70 kya",
             "Gave rise to haplogroups M and N"
         ],
-        "modern_distribution": "East Africa, and via M/N descendants worldwide"
+        "modern_distribution": "East Africa, and via M/N descendants worldwide",
+        "pmid": ["19165223", "17978185"]
     },
     "M": {
         "type": "mtDNA",
@@ -519,7 +609,8 @@ HAPLOGROUP_HISTORY = {
             "Rapid coastal migration to South Asia and beyond",
             "Dominant in South Asia, East Asia"
         ],
-        "modern_distribution": "South Asia, East Asia, Oceania, Native Americans"
+        "modern_distribution": "South Asia, East Asia, Oceania, Native Americans",
+        "pmid": ["19165223"]
     },
     "N": {
         "type": "mtDNA",
@@ -530,7 +621,8 @@ HAPLOGROUP_HISTORY = {
             "Spread through Middle East to Europe and Asia",
             "Gave rise to European haplogroups (H, V, J, T, U, K, etc.)"
         ],
-        "modern_distribution": "Europe, Middle East, partial Asia and Americas"
+        "modern_distribution": "Europe, Middle East, partial Asia and Americas",
+        "pmid": ["19165223"]
     },
     "H": {
         "type": "mtDNA",
@@ -541,7 +633,8 @@ HAPLOGROUP_HISTORY = {
             "Associated with population recovery from Ice Age refugia",
             "Most common European mtDNA haplogroup (40-50%)"
         ],
-        "modern_distribution": "Europe (especially Western), Middle East"
+        "modern_distribution": "Europe (especially Western), Middle East",
+        "pmid": ["19165223", "12730389"]
     },
     "U": {
         "type": "mtDNA",
@@ -552,7 +645,8 @@ HAPLOGROUP_HISTORY = {
             "Present in European hunter-gatherers before farming",
             "Diverse subclades (U5 oldest European-specific)"
         ],
-        "modern_distribution": "Europe, South Asia, North Africa"
+        "modern_distribution": "Europe, South Asia, North Africa",
+        "pmid": ["19165223"]
     },
     "K": {
         "type": "mtDNA",
@@ -563,7 +657,8 @@ HAPLOGROUP_HISTORY = {
             "Enriched in Ashkenazi Jewish populations",
             "Also associated with Neolithic farmers"
         ],
-        "modern_distribution": "Europe, especially Ashkenazi Jews"
+        "modern_distribution": "Europe, especially Ashkenazi Jews",
+        "pmid": ["19165223", "16689639"]
     },
     "A": {
         "type": "mtDNA",
@@ -574,7 +669,8 @@ HAPLOGROUP_HISTORY = {
             "Crossed Beringia during Ice Age",
             "Also common in Northeast Asia"
         ],
-        "modern_distribution": "Native Americans, East Asia (especially northeast)"
+        "modern_distribution": "Native Americans, East Asia (especially northeast)",
+        "pmid": ["19165223"]
     },
     "B": {
         "type": "mtDNA",
@@ -585,7 +681,8 @@ HAPLOGROUP_HISTORY = {
             "Part of Austronesian expansion across Pacific",
             "Also founding Native American lineage"
         ],
-        "modern_distribution": "Polynesia (very high), Southeast Asia, Native Americans"
+        "modern_distribution": "Polynesia (very high), Southeast Asia, Native Americans",
+        "pmid": ["19165223"]
     },
     
     # Y-DNA Haplogroups
@@ -599,7 +696,8 @@ HAPLOGROUP_HISTORY = {
             "Replaced most prior European Y-DNA lineages",
             "Now dominant in Western Europe"
         ],
-        "modern_distribution": "Western Europe (Ireland 80%, Spain 65%)"
+        "modern_distribution": "Western Europe (Ireland 80%, Spain 65%)",
+        "pmid": ["18285812", "25941402"]
     },
     "R1a": {
         "type": "Y-DNA",
@@ -610,7 +708,8 @@ HAPLOGROUP_HISTORY = {
             "Spread with pastoralist migrations",
             "High in Eastern Europe and South Asia"
         ],
-        "modern_distribution": "Eastern Europe, South Asia, Central Asia"
+        "modern_distribution": "Eastern Europe, South Asia, Central Asia",
+        "pmid": ["18285812", "25941402"]
     },
     "I": {
         "type": "Y-DNA",
@@ -621,7 +720,8 @@ HAPLOGROUP_HISTORY = {
             "Survived in Mesolithic hunter-gatherers",
             "I1 (Scandinavian) and I2 (Balkan) major subclades"
         ],
-        "modern_distribution": "Europe (Scandinavia, Balkans, Germany)"
+        "modern_distribution": "Europe (Scandinavia, Balkans, Germany)",
+        "pmid": ["18285812", "21058503"]
     },
     "E1b1b": {
         "type": "Y-DNA",
@@ -632,7 +732,8 @@ HAPLOGROUP_HISTORY = {
             "Associated with Neolithic farmers in some regions",
             "Common in Middle East, North Africa, Mediterranean"
         ],
-        "modern_distribution": "Africa, Middle East, Mediterranean Europe"
+        "modern_distribution": "Africa, Middle East, Mediterranean Europe",
+        "pmid": ["18285812", "21481273"]
     },
     "J": {
         "type": "Y-DNA",
@@ -643,7 +744,8 @@ HAPLOGROUP_HISTORY = {
             "J1 associated with Semitic speakers",
             "J2 spread with Mediterranean civilizations"
         ],
-        "modern_distribution": "Middle East, Mediterranean, Jewish diaspora"
+        "modern_distribution": "Middle East, Mediterranean, Jewish diaspora",
+        "pmid": ["18285812", "25079122"]
     },
     "O": {
         "type": "Y-DNA",
@@ -654,7 +756,8 @@ HAPLOGROUP_HISTORY = {
             "Expanded with rice agriculture",
             "O2 associated with Han Chinese expansion"
         ],
-        "modern_distribution": "East Asia, Southeast Asia"
+        "modern_distribution": "East Asia, Southeast Asia",
+        "pmid": ["18285812"]
     },
     "Q": {
         "type": "Y-DNA",
@@ -665,7 +768,8 @@ HAPLOGROUP_HISTORY = {
             "Crossed Beringia to populate Americas",
             "Also present in Siberia, Central Asia"
         ],
-        "modern_distribution": "Native Americans (~90%), Siberia"
+        "modern_distribution": "Native Americans (~90%), Siberia",
+        "pmid": ["18285812", "12740896"]
     },
     "N": {
         "type": "Y-DNA",
@@ -676,7 +780,8 @@ HAPLOGROUP_HISTORY = {
             "Associated with Uralic language family",
             "Dominant in Finland and Baltic peoples"
         ],
-        "modern_distribution": "Finland, Baltic, Siberia"
+        "modern_distribution": "Finland, Baltic, Siberia",
+        "pmid": ["18285812"]
     },
 }
 
@@ -684,6 +789,9 @@ HAPLOGROUP_HISTORY = {
 def determine_mtdna_haplogroup(genotypes: Dict[str, str]) -> Dict[str, Any]:
     """
     Determine mitochondrial DNA haplogroup from available SNPs.
+    
+    ⚠️ LOW CONFIDENCE - Consumer arrays cannot reliably determine haplogroups.
+    Results are INDICATIVE ONLY. Use dedicated mtDNA testing for accuracy.
     
     Args:
         genotypes: Dict mapping rsid -> genotype
@@ -693,12 +801,16 @@ def determine_mtdna_haplogroup(genotypes: Dict[str, str]) -> Dict[str, Any]:
     """
     results = {
         "haplogroup": "Unknown",
-        "confidence": "low",
+        "confidence": "low - consumer array limitation",
+        "confidence_note": "Consumer arrays test only ~20 of thousands of haplogroup-defining markers",
         "markers_found": 0,
         "markers_checked": len(MTDNA_MARKERS),
         "branch_evidence": [],
         "possible_subclades": [],
-        "history": None
+        "history": None,
+        "disclaimer": HAPLOGROUP_DISCLAIMER,
+        "recommendation": "For accurate mtDNA haplogroup: FTDNA mtDNA Full Sequence or YFull",
+        "pmid": ["19165223"]
     }
     
     # Check each marker
@@ -724,7 +836,8 @@ def determine_mtdna_haplogroup(genotypes: Dict[str, str]) -> Dict[str, Any]:
                         "rsid": rsid,
                         "position": info.get("position"),
                         "genotype": geno,
-                        "branch": branch
+                        "branch": branch,
+                        "pmid": info.get("pmid", [])
                     })
     
     # Determine most likely haplogroup
@@ -736,13 +849,15 @@ def determine_mtdna_haplogroup(genotypes: Dict[str, str]) -> Dict[str, Any]:
         results["haplogroup"] = top_hg
         results["branch_evidence"] = sorted_hgs[0][1]
         
-        # Set confidence based on evidence
-        if len(sorted_hgs[0][1]) >= 3:
-            results["confidence"] = "high"
-        elif len(sorted_hgs[0][1]) == 2:
-            results["confidence"] = "moderate"
+        # ALWAYS low confidence for consumer arrays
+        # Even with multiple markers, we're missing most defining SNPs
+        marker_count = len(sorted_hgs[0][1])
+        if marker_count >= 3:
+            results["confidence"] = "low - possibly correct major haplogroup"
+        elif marker_count == 2:
+            results["confidence"] = "very low - limited evidence"
         else:
-            results["confidence"] = "low"
+            results["confidence"] = "very low - single marker only"
         
         # Add possible subclades
         if len(sorted_hgs) > 1:
@@ -760,6 +875,9 @@ def determine_y_haplogroup(genotypes: Dict[str, str]) -> Dict[str, Any]:
     Determine Y-chromosome haplogroup from available SNPs.
     Only applicable for males (requires Y-chromosome data).
     
+    ⚠️ LOW CONFIDENCE - Consumer arrays cannot reliably determine haplogroups.
+    Results are INDICATIVE ONLY. Use dedicated Y-DNA testing for accuracy.
+    
     Args:
         genotypes: Dict mapping rsid -> genotype
         
@@ -768,13 +886,17 @@ def determine_y_haplogroup(genotypes: Dict[str, str]) -> Dict[str, Any]:
     """
     results = {
         "haplogroup": "Unknown",
-        "confidence": "low",
+        "confidence": "low - consumer array limitation",
+        "confidence_note": "Consumer arrays test only ~25 of thousands of Y-DNA SNPs",
         "markers_found": 0,
         "markers_checked": len(YCHROMOSOME_MARKERS),
         "branch_evidence": [],
         "possible_subclades": [],
         "history": None,
-        "sex_determination": "unknown"
+        "sex_determination": "unknown",
+        "disclaimer": HAPLOGROUP_DISCLAIMER,
+        "recommendation": "For accurate Y-DNA haplogroup: FTDNA Big Y-700 or YFull",
+        "pmid": ["18285812", "27654910"]
     }
     
     # Check for Y-chromosome presence (indicates male)
@@ -803,7 +925,8 @@ def determine_y_haplogroup(genotypes: Dict[str, str]) -> Dict[str, Any]:
                         "rsid": rsid,
                         "position": info.get("position"),
                         "genotype": geno,
-                        "branch": branch
+                        "branch": branch,
+                        "pmid": info.get("pmid", [])
                     })
     
     # Determine sex from Y marker presence
@@ -823,10 +946,12 @@ def determine_y_haplogroup(genotypes: Dict[str, str]) -> Dict[str, Any]:
         results["haplogroup"] = top_hg
         results["branch_evidence"] = sorted_hgs[0][1]
         
-        if len(sorted_hgs[0][1]) >= 2:
-            results["confidence"] = "high"
+        # ALWAYS low confidence for consumer arrays
+        marker_count = len(sorted_hgs[0][1])
+        if marker_count >= 2:
+            results["confidence"] = "low - possibly correct major haplogroup"
         else:
-            results["confidence"] = "moderate"
+            results["confidence"] = "very low - single marker only"
         
         if len(sorted_hgs) > 1:
             results["possible_subclades"] = [hg for hg, _ in sorted_hgs[1:4]]
@@ -841,6 +966,14 @@ def analyze_haplogroups(genotypes: Dict[str, str]) -> Dict[str, Any]:
     """
     Complete haplogroup analysis including both mtDNA and Y-DNA.
     
+    ⚠️ LOW CONFIDENCE - Consumer arrays cannot reliably determine haplogroups.
+    These results are INDICATIVE ONLY and should not be used for:
+    - Genealogical matching
+    - Family tree research
+    - Ancestry documentation
+    
+    For accurate haplogroups, use dedicated testing services.
+    
     Args:
         genotypes: Dict mapping rsid -> genotype
         
@@ -851,24 +984,44 @@ def analyze_haplogroups(genotypes: Dict[str, str]) -> Dict[str, Any]:
     ydna = determine_y_haplogroup(genotypes)
     
     return {
+        "disclaimer": HAPLOGROUP_DISCLAIMER,
         "mtDNA": {
             "haplogroup": mtdna["haplogroup"],
             "confidence": mtdna["confidence"],
+            "confidence_note": mtdna["confidence_note"],
             "markers_found": mtdna["markers_found"],
             "lineage": "maternal",
             "history": mtdna.get("history"),
-            "evidence": mtdna.get("branch_evidence", [])
+            "evidence": mtdna.get("branch_evidence", []),
+            "recommendation": mtdna["recommendation"],
+            "pmid": mtdna.get("pmid", [])
         },
         "Y_DNA": {
             "haplogroup": ydna["haplogroup"],
             "confidence": ydna["confidence"],
+            "confidence_note": ydna.get("confidence_note", ""),
             "markers_found": ydna["markers_found"],
             "lineage": "paternal",
             "sex": ydna["sex_determination"],
             "history": ydna.get("history"),
-            "evidence": ydna.get("branch_evidence", [])
+            "evidence": ydna.get("branch_evidence", []),
+            "recommendation": ydna["recommendation"],
+            "pmid": ydna.get("pmid", [])
         },
-        "summary": _generate_haplogroup_summary(mtdna, ydna)
+        "summary": _generate_haplogroup_summary(mtdna, ydna),
+        "methodology": {
+            "description": "Haplogroup inference from consumer DNA array markers",
+            "limitations": [
+                "Consumer arrays test only ~40 haplogroup markers total",
+                "The mtDNA and Y-DNA phylogenetic trees contain thousands of defining SNPs",
+                "Missing branch-defining SNPs can lead to incorrect classification",
+                "Subclade resolution is not possible with array data",
+                "Results may conflict with dedicated haplogroup testing"
+            ],
+            "recommendation": "For genealogical research or accurate haplogroup determination, "
+                            "use FTDNA Big Y / mtDNA Full Sequence, YFull, or whole genome sequencing",
+            "pmid": ["19165223", "18285812", "27654910"]
+        }
     }
 
 
@@ -876,13 +1029,19 @@ def _generate_haplogroup_summary(mtdna: Dict, ydna: Dict) -> str:
     """Generate human-readable haplogroup summary."""
     lines = []
     
+    lines.append("⚠️ LOW CONFIDENCE - Consumer Array Limitation")
+    lines.append("These haplogroup calls are INDICATIVE ONLY. Use dedicated testing for accuracy.")
+    lines.append("")
+    
     if mtdna["haplogroup"] != "Unknown":
-        lines.append(f"Maternal lineage (mtDNA): Haplogroup {mtdna['haplogroup']}")
+        lines.append(f"Maternal lineage (mtDNA): Possibly Haplogroup {mtdna['haplogroup']}")
+        lines.append(f"  Confidence: {mtdna['confidence']}")
         if mtdna.get("history"):
             hist = mtdna["history"]
             lines.append(f"  Origin: {hist.get('origin', 'Unknown')}")
             if hist.get("migration"):
                 lines.append(f"  History: {hist['migration'][0]}")
+        lines.append(f"  For accurate result: {mtdna['recommendation']}")
     else:
         lines.append("Maternal lineage: Unable to determine (insufficient markers)")
     
@@ -891,12 +1050,14 @@ def _generate_haplogroup_summary(mtdna: Dict, ydna: Dict) -> str:
     if ydna["sex_determination"] == "likely_female":
         lines.append("Paternal lineage (Y-DNA): Not applicable (no Y-chromosome detected)")
     elif ydna["haplogroup"] != "Unknown":
-        lines.append(f"Paternal lineage (Y-DNA): Haplogroup {ydna['haplogroup']}")
+        lines.append(f"Paternal lineage (Y-DNA): Possibly Haplogroup {ydna['haplogroup']}")
+        lines.append(f"  Confidence: {ydna['confidence']}")
         if ydna.get("history"):
             hist = ydna["history"]
             lines.append(f"  Origin: {hist.get('origin', 'Unknown')}")
             if hist.get("migration"):
                 lines.append(f"  History: {hist['migration'][0]}")
+        lines.append(f"  For accurate result: {ydna['recommendation']}")
     else:
         lines.append("Paternal lineage: Unable to determine (insufficient markers)")
     

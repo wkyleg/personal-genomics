@@ -828,6 +828,136 @@
         }
         
         /* ========================================
+           PMID Links
+           ======================================== */
+        .pmid-link {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent-primary);
+            text-decoration: none;
+            padding: 0.1rem 0.35rem;
+            background: rgba(79,70,229,0.1);
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .pmid-link:hover {
+            background: var(--accent-primary);
+            color: white;
+        }
+        
+        .pmid-list {
+            display: inline-flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+        }
+        
+        /* ========================================
+           Confidence Intervals
+           ======================================== */
+        .confidence-interval {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
+        
+        .prs-range {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        
+        /* ========================================
+           Haplogroup Warning Banner
+           ======================================== */
+        .warning-banner {
+            background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+            border: 2px solid var(--warning);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .warning-banner h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--warning);
+            margin-bottom: 0.5rem;
+        }
+        
+        .warning-banner p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .warning-banner ul {
+            margin-top: 0.5rem;
+            padding-left: 1.25rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .warning-banner li {
+            margin-bottom: 0.25rem;
+        }
+        
+        /* ========================================
+           Methodology Section
+           ======================================== */
+        .methodology-section {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            margin-top: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .methodology-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .methodology-header:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        
+        .methodology-header h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .methodology-content {
+            padding: 0 1.25rem 1.25rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        
+        .methodology-content.hidden {
+            display: none;
+        }
+        
+        .methodology-content ul {
+            padding-left: 1.25rem;
+            margin: 0.5rem 0;
+        }
+        
+        .methodology-content li {
+            margin-bottom: 0.35rem;
+        }
+        
+        /* ========================================
            Loading & Error States
            ======================================== */
         .loading {
@@ -1003,6 +1133,7 @@
                 <a href="#athletic" class="nav-link">🏃 Athletic</a>
                 <a href="#uv" class="nav-link">☀️ UV/Skin</a>
                 <a href="#dietary" class="nav-link">🥗 Dietary</a>
+                <a href="#methodology" class="nav-link">📋 Methodology</a>
             </div>
         </div>
     </nav>
@@ -1201,6 +1332,44 @@
                 </div>
             </section>
             
+            <!-- Methodology & Limitations Section -->
+            <section id="methodology">
+                <div class="card">
+                    <div class="card-header" onclick="toggleCard(this)">
+                        <h2>📋 Methodology & Limitations</h2>
+                        <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"/>
+                        </svg>
+                    </div>
+                    <div class="card-body" id="methodology-content">
+                        <div class="methodology-content">
+                            <h4>🔬 Analysis Methodology</h4>
+                            <p>This analysis uses publicly available genetic research and GWAS data to interpret your genotype data.</p>
+                            <ul>
+                                <li>Pharmacogenomics: Based on PharmGKB and CPIC guidelines</li>
+                                <li>Polygenic Risk Scores: Aggregated from published GWAS effect sizes</li>
+                                <li>Ancestry: Likelihood-based estimation using ancestry informative markers</li>
+                                <li>Haplogroups: Pattern matching against known phylogenetic markers</li>
+                            </ul>
+                            
+                            <h4 style="margin-top: 1.5rem;">⚠️ Critical Limitations</h4>
+                            <ul>
+                                <li><strong>Consumer arrays capture ~0.1% of the genome</strong> — rare and structural variants are missed</li>
+                                <li><strong>Most conditions are not purely genetic</strong> — lifestyle and environment matter enormously</li>
+                                <li><strong>Ancestry estimates are continental-level only</strong> — sub-regional claims (Irish vs Scottish) are unreliable</li>
+                                <li><strong>Haplogroup calls are LOW CONFIDENCE</strong> — use dedicated Y-DNA/mtDNA testing for accuracy</li>
+                                <li><strong>Polygenic scores have wide confidence intervals</strong> — interpret ranges, not point estimates</li>
+                                <li><strong>Reference populations are biased</strong> — most research uses European-ancestry samples</li>
+                            </ul>
+                            
+                            <h4 style="margin-top: 1.5rem;">📚 Key References</h4>
+                            <p>Literature citations (PMIDs) are provided where available. Click any PMID to view on PubMed.</p>
+                            <div id="methodology-pmids"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
             <!-- Disclaimer -->
             <div class="disclaimer">
                 <h3>⚠️ Important Disclaimers</h3>
@@ -1217,7 +1386,7 @@
     <footer>
         <div class="container">
             <div class="footer-content">
-                <p>Personal Genomics Dashboard v4.2.0 | Analysis runs locally, your data stays private</p>
+                <p>Personal Genomics Dashboard v4.3.0 | Analysis runs locally, your data stays private</p>
                 <p style="margin-top: 0.5rem;">
                     <a href="https://github.com/elata-bio/personal-genomics" target="_blank">GitHub</a> · 
                     Generated by <a href="https://openclaw.ai">OpenClaw</a>
@@ -1443,7 +1612,7 @@
         }
         
         // ========================================
-        // PRS Section
+        // PRS Section (with confidence intervals)
         // ========================================
         function renderPRS() {
             const grid = document.getElementById('prs-grid');
@@ -1454,24 +1623,53 @@
                 return;
             }
             
-            grid.innerHTML = Object.entries(prs).map(([condition, scores]) => {
+            // Add methodology note at top
+            let html = `
+                <div class="warning-banner" style="grid-column: 1 / -1; margin-bottom: 1rem;">
+                    <h4>⚠️ Interpret with Caution</h4>
+                    <p>
+                        Polygenic scores are <strong>probabilistic estimates with wide confidence intervals</strong>. 
+                        They do NOT predict whether you will develop a condition. Most conditions are 50-80% non-genetic.
+                        Percentile RANGES are shown because point estimates give false precision.
+                    </p>
+                </div>
+            `;
+            
+            html += Object.entries(prs).map(([condition, scores]) => {
                 const percentile = scores.percentile_estimate || 50;
                 const confidence = scores.confidence || 'low';
                 const coverage = Math.round((scores.coverage || 0) * 100);
+                const snpsFound = scores.snps_found || 0;
+                const snpsTotal = scores.snps_total || 0;
                 
-                // Color based on percentile
+                // Calculate confidence interval based on coverage
+                // Lower coverage = wider interval
+                let intervalWidth = confidence === 'low' ? 20 : confidence === 'moderate' ? 15 : 10;
+                if (coverage < 50) intervalWidth += 10;
+                
+                const lowerBound = Math.max(1, percentile - intervalWidth);
+                const upperBound = Math.min(99, percentile + intervalWidth);
+                
+                // Color based on upper bound (conservative)
                 let color = 'var(--success)';
-                if (percentile > 75) color = 'var(--danger)';
-                else if (percentile > 50) color = 'var(--warning)';
+                let riskLabel = 'likely average or below';
+                if (lowerBound > 60) {
+                    color = 'var(--danger)';
+                    riskLabel = 'possibly elevated';
+                } else if (upperBound > 70) {
+                    color = 'var(--warning)';
+                    riskLabel = 'uncertain - could be average or elevated';
+                }
                 
                 return `
                     <div class="prs-card">
                         <div class="prs-header">
                             <span class="prs-name">${formatConditionName(condition)}</span>
-                            <span class="prs-percentile" style="color: ${color}">${percentile}%</span>
+                            <span class="prs-percentile" style="color: ${color}">${lowerBound}-${upperBound}%</span>
                         </div>
                         <div class="prs-bar-container">
-                            <div class="prs-bar" style="width: ${percentile}%; background: ${color}"></div>
+                            <div class="prs-bar" style="width: ${upperBound}%; background: ${color}; opacity: 0.3;"></div>
+                            <div class="prs-bar" style="width: ${lowerBound}%; background: ${color}; position: absolute; top: 0;"></div>
                             <div class="prs-marker" style="left: ${percentile}%"></div>
                         </div>
                         <div class="prs-scale">
@@ -1480,11 +1678,16 @@
                             <span>High Risk</span>
                         </div>
                         <div class="prs-confidence">
-                            ${scores.snps_found || 0}/${scores.snps_total || 0} SNPs (${coverage}%) · Confidence: ${confidence}
+                            ${snpsFound}/${snpsTotal} SNPs (${coverage}%) · Confidence: ${confidence}
+                        </div>
+                        <div class="prs-range" style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                            Interpretation: ${riskLabel}
                         </div>
                     </div>
                 `;
             }).join('');
+            
+            grid.innerHTML = html;
         }
         
         // ========================================
@@ -1568,7 +1771,7 @@
         }
         
         // ========================================
-        // Ancestry Section
+        // Ancestry Section (with disclaimers and confidence intervals)
         // ========================================
         function renderAncestry() {
             const container = document.getElementById('ancestry-info');
@@ -1577,36 +1780,103 @@
             
             let html = '';
             
-            // Haplogroups
+            // Haplogroup disclaimer - ALWAYS SHOW
             if (haplogroups.mtDNA || haplogroups.Y_DNA) {
                 html += `
-                    <div class="haplogroup-card">
-                        <div class="haplogroup-type">Maternal Lineage (mtDNA)</div>
-                        <div class="haplogroup-value">${haplogroups.mtDNA?.haplogroup || 'Unknown'}</div>
-                        <div class="haplogroup-desc">${haplogroups.mtDNA?.description || ''}</div>
+                    <div class="warning-banner" style="grid-column: 1 / -1;">
+                        <h4>⚠️ Haplogroup Limitation - LOW CONFIDENCE</h4>
+                        <p>
+                            Consumer DNA arrays <strong>cannot reliably determine haplogroups</strong>. 
+                            These results are <strong>indicative only</strong> and may be incorrect.
+                        </p>
+                        <ul>
+                            <li>Arrays test ~40 of thousands of haplogroup-defining markers</li>
+                            <li>Missing markers can cause misclassification</li>
+                            <li>Subclade resolution is NOT possible</li>
+                        </ul>
+                        <p style="margin-top: 0.75rem;">
+                            <strong>For accurate haplogroups:</strong> FTDNA Big Y-700, FTDNA mtDNA Full Sequence, or YFull WGS
+                        </p>
                     </div>
                 `;
                 
-                if (haplogroups.Y_DNA) {
+                // mtDNA haplogroup
+                const mtdna = haplogroups.mtDNA || {};
+                const mtConfidence = mtdna.confidence || 'low';
+                html += `
+                    <div class="haplogroup-card">
+                        <div class="haplogroup-type">Maternal Lineage (mtDNA)</div>
+                        <div class="haplogroup-value">${mtdna.haplogroup || 'Unknown'}*</div>
+                        <div class="haplogroup-desc" style="color: var(--warning); font-size: 0.75rem;">
+                            *${mtConfidence.includes('low') ? 'LOW CONFIDENCE' : mtConfidence}
+                        </div>
+                        <div class="haplogroup-desc">${mtdna.description || mtdna.history?.modern_distribution || ''}</div>
+                        ${mtdna.pmid ? `<div style="margin-top: 0.5rem;">${renderPMIDs(mtdna.pmid)}</div>` : ''}
+                    </div>
+                `;
+                
+                // Y-DNA haplogroup
+                if (haplogroups.Y_DNA && haplogroups.Y_DNA.haplogroup !== 'N/A (female)') {
+                    const ydna = haplogroups.Y_DNA || {};
+                    const yConfidence = ydna.confidence || 'low';
                     html += `
                         <div class="haplogroup-card">
                             <div class="haplogroup-type">Paternal Lineage (Y-DNA)</div>
-                            <div class="haplogroup-value">${haplogroups.Y_DNA?.haplogroup || 'Unknown'}</div>
-                            <div class="haplogroup-desc">${haplogroups.Y_DNA?.description || ''}</div>
+                            <div class="haplogroup-value">${ydna.haplogroup || 'Unknown'}*</div>
+                            <div class="haplogroup-desc" style="color: var(--warning); font-size: 0.75rem;">
+                                *${yConfidence.includes('low') ? 'LOW CONFIDENCE' : yConfidence}
+                            </div>
+                            <div class="haplogroup-desc">${ydna.description || ydna.history?.modern_distribution || ''}</div>
+                            ${ydna.pmid ? `<div style="margin-top: 0.5rem;">${renderPMIDs(ydna.pmid)}</div>` : ''}
+                        </div>
+                    `;
+                } else if (haplogroups.Y_DNA?.haplogroup === 'N/A (female)') {
+                    html += `
+                        <div class="haplogroup-card">
+                            <div class="haplogroup-type">Paternal Lineage (Y-DNA)</div>
+                            <div class="haplogroup-value">N/A</div>
+                            <div class="haplogroup-desc">Not applicable (no Y-chromosome detected - likely female)</div>
                         </div>
                     `;
                 }
             }
             
-            // Ancestry composition
-            if (ancestry.composition && Object.keys(ancestry.composition).length > 0) {
+            // Ancestry composition with confidence intervals
+            const composition = ancestry.composition || ancestry.ancestry_proportions || {};
+            const confidenceIntervals = ancestry.confidence_intervals || {};
+            
+            if (Object.keys(composition).length > 0) {
+                const ancestryConfidence = ancestry.confidence || 'low';
+                const markersUsed = ancestry.markers_used || 'unknown';
+                
                 html += `
                     <div class="haplogroup-card" style="grid-column: 1 / -1;">
-                        <div class="haplogroup-type">Ancestry Composition</div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem;">
-                            ${Object.entries(ancestry.composition).map(([pop, pct]) => `
-                                <span class="badge badge-info">${pop}: ${typeof pct === 'number' ? pct.toFixed(1) : pct}%</span>
-                            `).join('')}
+                        <div class="haplogroup-type">Ancestry Composition (Continental Level Only)</div>
+                        
+                        <div class="warning-banner" style="margin: 1rem 0; padding: 0.75rem;">
+                            <p style="margin: 0; font-size: 0.8rem;">
+                                <strong>⚠️ Continental ancestry only</strong> — Cannot distinguish sub-regions 
+                                (e.g., Irish vs Scottish, Nigerian vs Ghanaian)
+                            </p>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                            ${Object.entries(composition).map(([pop, pct]) => {
+                                // Handle both string (with CI) and number formats
+                                let display = typeof pct === 'number' ? `${Math.round(pct)}%` : pct;
+                                let ci = confidenceIntervals[pop];
+                                
+                                return `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--bg-primary); border-radius: 6px;">
+                                        <span style="font-weight: 500;">${pop}</span>
+                                        <span class="badge badge-info">${display}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-secondary);">
+                            Confidence: ${ancestryConfidence} · Markers: ${markersUsed}
                         </div>
                     </div>
                 `;
@@ -1617,6 +1887,21 @@
             }
             
             container.innerHTML = html;
+        }
+        
+        // Helper function to render PMIDs as clickable links
+        function renderPMIDs(pmids) {
+            if (!pmids) return '';
+            const pmidList = Array.isArray(pmids) ? pmids : [pmids];
+            if (pmidList.length === 0) return '';
+            
+            return `
+                <span class="pmid-list">
+                    ${pmidList.map(pmid => 
+                        `<a href="https://pubmed.ncbi.nlm.nih.gov/${pmid}/" target="_blank" rel="noopener" class="pmid-link" title="View on PubMed">PMID:${pmid}</a>`
+                    ).join('')}
+                </span>
+            `;
         }
         
         // ========================================

@@ -1,12 +1,24 @@
-# Personal Genomics Skill v4.2.0
+# Personal Genomics Skill v4.3.0
 
 Comprehensive local DNA analysis with **1600+ markers** across **30 categories**. Privacy-first genetic analysis for AI agents.
+
+**⚠️ v4.3.0 focuses on ACCURACY AND HONESTY** - improved uncertainty handling, PMIDs for all claims, and explicit limitations.
 
 ## Quick Start
 
 ```bash
 python comprehensive_analysis.py /path/to/dna_file.txt
 ```
+
+## ⚠️ Important Limitations
+
+1. **Haplogroups are LOW CONFIDENCE** - Consumer arrays cannot reliably call haplogroups. Recommend dedicated Y-DNA/mtDNA testing (FTDNA, YFull) for accuracy.
+
+2. **Ancestry is CONTINENTAL ONLY** - Cannot distinguish sub-regions (Irish vs Scottish, Nigerian vs Ghanaian). All estimates include confidence intervals.
+
+3. **PRS scores show RANGES, not point estimates** - Polygenic risk scores have wide confidence intervals. Most conditions are 50-80% non-genetic.
+
+4. **Every marker has PMIDs** - All claims are backed by literature citations linked to PubMed.
 
 ## Triggers
 
@@ -45,16 +57,41 @@ Activate this skill when user mentions:
 - `full_analysis.json` - Complete data
 - `report.txt` - Human-readable
 - `genetic_report.pdf` - Professional PDF report
+- `dashboard.html` - Interactive visualization
 
-## New v4.0 Features
+## New v4.3.0 Features (Accuracy Update)
 
-### Haplogroup Analysis
+### Honest Haplogroup Reporting
+- **LOW CONFIDENCE** labels on all haplogroup calls
+- Explicit disclaimer that consumer arrays can't reliably call haplogroups
+- Recommendations for dedicated Y-DNA/mtDNA testing services
+- PMIDs for haplogroup marker sources
+
+### Continental Ancestry Only
+- Removed sub-regional claims (cannot distinguish neighboring populations)
+- **Confidence intervals** on all ancestry percentages
+- Explicit methodology limitations documented
+- PMIDs for all ancestry informative markers
+
+### PRS with Uncertainty Ranges
+- Percentile RANGES instead of point estimates
+- Confidence intervals based on marker coverage
+- Explicit interpretation guidance ("likely average", "uncertain", etc.)
+
+### PMIDs Throughout
+- Every marker has at least one literature citation
+- Clickable PubMed links in dashboard
+- Methodology & Limitations section in dashboard
+
+## Legacy v4.0-4.2 Features
+
+### Haplogroup Analysis (indicative only)
 - Mitochondrial DNA (mtDNA) - maternal lineage
 - Y-chromosome - paternal lineage (males only)
 - Migration history context
 - PhyloTree/ISOGG standards
 
-### Ancestry Composition
+### Ancestry Composition (continental only)
 - Population comparisons (EUR, AFR, EAS, SAS, AMR)
 - Admixture detection
 - Ancestry informative markers

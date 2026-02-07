@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive Genetic Analysis - 1600+ Markers (v4.2.0)
+Comprehensive Genetic Analysis - 1600+ Markers (v4.3.0)
 
 Full health, pharmacogenomics, ancestry, traits, and actionable recommendations.
 Works with ANY ancestry/ethnic background worldwide.
@@ -137,7 +137,7 @@ class PRSResult(TypedDict, total=False):
 # CONSTANTS
 # =============================================================================
 
-VERSION = "4.2.0"
+VERSION = "4.3.0"
 OUTPUT_DIR = Path.home() / "dna-analysis" / "reports"
 
 # Valid rsID pattern
@@ -168,6 +168,8 @@ try:
     from markers.dermatology import DERMATOLOGY_MARKERS
     from markers.vision_hearing import VISION_HEARING_MARKERS
     from markers.fertility import FERTILITY_MARKERS
+    from markers.haplogroups import analyze_haplogroups
+    from markers.ancestry_composition import get_ancestry_summary
     from markers import get_marker_counts
     MODULES_LOADED = True
 except ImportError as e:
@@ -880,6 +882,29 @@ def generate_agent_summary(all_results: Dict[str, Any]) -> Dict[str, Any]:
                     "interpretation": finding.get("effect")
                 })
 
+    # Add haplogroups (with LOW CONFIDENCE disclaimer)
+    haplogroups_data = all_results.get("haplogroups", {})
+    if haplogroups_data:
+        summary["haplogroups"] = {
+            "disclaimer": haplogroups_data.get("disclaimer", "Consumer arrays cannot reliably determine haplogroups"),
+            "mtDNA": haplogroups_data.get("mtDNA", {}),
+            "Y_DNA": haplogroups_data.get("Y_DNA", {}),
+            "methodology": haplogroups_data.get("methodology", {})
+        }
+    
+    # Add ancestry (continental level only with confidence intervals)
+    ancestry_data = all_results.get("ancestry", {})
+    if ancestry_data:
+        composition = ancestry_data.get("composition", {})
+        summary["ancestry"] = {
+            "disclaimer": ancestry_data.get("disclaimer", "Continental-level estimates only"),
+            "composition": composition.get("ancestry_proportions", {}),
+            "confidence_intervals": composition.get("confidence_intervals", {}),
+            "confidence": composition.get("confidence", "low"),
+            "markers_used": composition.get("markers_used", 0),
+            "methodology": ancestry_data.get("methodology", {})
+        }
+
     return summary
 
 
@@ -1342,6 +1367,10 @@ def analyze_dna_file(
         all_results["dermatology"] = analyze_markers(genotypes, DERMATOLOGY_MARKERS, "dermatology")
         all_results["vision_hearing"] = analyze_markers(genotypes, VISION_HEARING_MARKERS, "vision_hearing")
         all_results["fertility"] = analyze_markers(genotypes, FERTILITY_MARKERS, "fertility")
+
+        # Ancestry & Haplogroups (with proper disclaimers)
+        all_results["haplogroups"] = analyze_haplogroups(genotypes)
+        all_results["ancestry"] = get_ancestry_summary(genotypes)
 
         # Advanced features
         all_results["lifestyle_recommendations"] = generate_lifestyle_recommendations(all_results)
