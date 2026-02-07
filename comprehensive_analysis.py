@@ -892,17 +892,16 @@ def generate_agent_summary(all_results: Dict[str, Any]) -> Dict[str, Any]:
             "methodology": haplogroups_data.get("methodology", {})
         }
     
-    # Add ancestry (continental level only with confidence intervals)
+    # Add ancestry (ancient ancestral signals, not modern ethnicity)
     ancestry_data = all_results.get("ancestry", {})
     if ancestry_data:
-        composition = ancestry_data.get("composition", {})
         summary["ancestry"] = {
-            "disclaimer": ancestry_data.get("disclaimer", "Continental-level estimates only"),
-            "composition": composition.get("ancestry_proportions", {}),
-            "confidence_intervals": composition.get("confidence_intervals", {}),
-            "confidence": composition.get("confidence", "low"),
-            "markers_used": composition.get("markers_used", 0),
-            "methodology": ancestry_data.get("methodology", {})
+            "analysis_type": "ancient_ancestral_signals",
+            "disclaimer": ancestry_data.get("disclaimer", 
+                "Detects signals from ancient populations, not modern ethnicity percentages"),
+            "signals": ancestry_data.get("signals", {}),
+            "educational_note": ancestry_data.get("educational_note", ""),
+            "summary": ancestry_data.get("summary", "")
         }
 
     return summary

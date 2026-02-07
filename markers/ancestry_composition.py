@@ -1,427 +1,676 @@
 """
-Ancestry Composition Analysis Module
-Population admixture estimation from SNP data
+Ancient Ancestral Signals Module
+Detection of ancestral population signatures in modern genomes
 
-This module provides:
-- Reference population comparisons at CONTINENTAL level only
-- Admixture estimation using ancestry informative markers (AIMs)
-- Confidence intervals for all estimates
-- Explicit methodology limitations
+This module detects signals from ancient ancestral populations:
+- Western Hunter-Gatherers (WHG) - Mesolithic Europeans (~15,000-8,000 BP)
+- Early European Farmers (EEF) - Anatolian Neolithic (~10,000-5,000 BP)
+- Steppe Pastoralists - Yamnaya/Pontic-Caspian (~5,000-4,000 BP)
+- Archaic Introgression - Neanderthal (~50,000-40,000 BP) and Denisovan
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║  ⚠️  IMPORTANT LIMITATIONS                                                   ║
+║  WHY ANCIENT SIGNALS INSTEAD OF MODERN ETHNICITY?                            ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
-║  Consumer DNA arrays have significant limitations for ancestry estimation:   ║
+║  Modern ethnicity percentages (e.g., "32% Irish") are scientifically         ║
+║  problematic because:                                                         ║
 ║                                                                              ║
-║  • Can only reliably distinguish CONTINENTAL ancestry (not sub-regions)      ║
-║  • Cannot distinguish Irish from Scottish, German from Polish, etc.          ║
-║  • Estimates have wide confidence intervals (typically ±10-20%)              ║
-║  • Reference panels are biased toward well-studied populations               ║
-║  • Ancient ancestry may not match modern population labels                   ║
+║  • Consumer arrays can't distinguish closely related populations              ║
+║  • Modern national boundaries don't reflect genetic history                   ║
+║  • Ancient migrations mixed populations extensively                           ║
 ║                                                                              ║
-║  These results provide a rough estimate only. For genealogical research,     ║
-║  combine with paper trail documentation.                                     ║
+║  Ancient ancestral signals are:                                              ║
+║  • Based on well-characterized ancient DNA sequences                          ║
+║  • Scientifically validated with clear trait associations                     ║
+║  • More informative about actual genetic heritage                             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-Sources & PMIDs:
-- 1000 Genomes Project Consortium. 2015. A global reference for human genetic 
-  variation. PMID: 26432245
-- The International HapMap 3 Consortium. 2010. Integrating common and rare 
-  genetic variation. PMID: 20981092
-- Rosenberg NA et al. 2002. Genetic structure of human populations. 
-  PMID: 12493913
-- Li JZ et al. 2008. Worldwide human relationships inferred from genome-wide 
-  patterns. PMID: 18292342
+Key References:
+- Lazaridis et al. 2014. Ancient human genomes suggest three ancestral 
+  populations for present-day Europeans. PMID: 25230663
+- Haak et al. 2015. Massive migration from the steppe was a source for 
+  Indo-European languages in Europe. PMID: 25731166
+- Mathieson et al. 2015. Genome-wide patterns of selection in 230 ancient 
+  Eurasians. PMID: 26595274
+- Prüfer et al. 2014. The complete genome sequence of a Neanderthal. 
+  PMID: 24352235
+- Vernot & Akey 2014. Resurrecting surviving Neandertal lineages from 
+  modern human genomes. PMID: 24476815
 """
 
 from typing import Dict, List, Optional, Any, Tuple
 import math
 
 # =============================================================================
-# METHODOLOGY DISCLAIMER
+# ANCIENT POPULATION DESCRIPTIONS
 # =============================================================================
 
-ANCESTRY_DISCLAIMER = """
-⚠️ ANCESTRY ESTIMATION LIMITATIONS
-
-This ancestry analysis can only reliably estimate CONTINENTAL-level ancestry:
-• European (EUR)
-• African (AFR)
-• East Asian (EAS)
-• South Asian (SAS)
-• Americas/Indigenous (AMR)
-
-SUB-REGIONAL claims (Irish vs Scottish, Nigerian vs Ghanaian) are NOT reliable
-with consumer DNA arrays due to:
-1. Insufficient marker density for fine-scale population structure
-2. Reference panel limitations
-3. Recent shared ancestry between neighboring populations
-
-All percentages include confidence intervals showing the range of uncertainty.
-"""
+ANCIENT_POPULATIONS = {
+    "WHG": {
+        "name": "Western Hunter-Gatherers (Mesolithic)",
+        "abbreviation": "WHG",
+        "time_period": "~15,000-8,000 years ago",
+        "description": "Indigenous European hunter-gatherer population before the arrival of farming. "
+                      "Survived in Mesolithic Europe, later mixed with incoming farmers.",
+        "geographic_origin": "Western and Central Europe (Loschbour, La Braña, Cheddar Man)",
+        "traits_contributed": [
+            "Blue eyes (likely origin of European blue eyes)",
+            "Dark skin (contrary to modern stereotypes)",
+            "Lactose intolerance (original European state)",
+            "Immune adaptations to European pathogens"
+        ],
+        "modern_distribution": "Present in all Europeans at varying levels (~10-30%). "
+                              "Highest in Baltic and Scandinavian populations.",
+        "pmid": ["25230663", "24463515", "26595274"]
+    },
+    "EEF": {
+        "name": "Early European Farmers (Neolithic Anatolian)",
+        "abbreviation": "EEF",
+        "time_period": "~10,000-5,000 years ago",
+        "description": "Anatolian farmers who migrated to Europe bringing agriculture. "
+                      "Largely replaced WHG populations but mixed with them over time.",
+        "geographic_origin": "Anatolia (modern Turkey), spread through Mediterranean and Central Europe",
+        "traits_contributed": [
+            "Lighter skin (adaptation to lower vitamin D from grain diet)",
+            "Brown eyes (ancestral state)",
+            "Shorter stature than WHG",
+            "Metabolic adaptations to agricultural diet",
+            "Some lactose tolerance (not as strong as later Steppe)"
+        ],
+        "modern_distribution": "Major component of Southern European ancestry (~60-80%). "
+                              "Present throughout Europe, decreasing northward.",
+        "pmid": ["25230663", "25731166", "26595274"]
+    },
+    "STEPPE": {
+        "name": "Steppe Pastoralists (Yamnaya/Pontic-Caspian)",
+        "abbreviation": "Steppe",
+        "time_period": "~5,000-4,000 years ago",
+        "description": "Bronze Age pastoralists from the Pontic-Caspian steppe who migrated "
+                      "into Europe. Brought Indo-European languages, horses, and the wheel.",
+        "geographic_origin": "Pontic-Caspian Steppe (Ukraine/Southern Russia)",
+        "traits_contributed": [
+            "Strong lactose tolerance (LCT persistence)",
+            "Taller stature",
+            "Lighter skin and hair pigmentation",
+            "Indo-European language family",
+            "Some immunity genes"
+        ],
+        "modern_distribution": "Major component of Northern/Eastern European ancestry (~30-50%). "
+                              "Highest in Northern Europe, also present in South Asia (Indo-Aryan).",
+        "pmid": ["25731166", "25230663", "26062507"]
+    },
+    "NEANDERTHAL": {
+        "name": "Neanderthal Introgression",
+        "abbreviation": "Neanderthal",
+        "time_period": "~50,000-40,000 years ago (introgression events)",
+        "description": "Archaic human species that interbred with anatomically modern humans "
+                      "as they left Africa. All non-African humans carry ~1-4% Neanderthal DNA.",
+        "geographic_origin": "Europe and Western Asia",
+        "traits_contributed": [
+            "Immune system genes (HLA variants)",
+            "Keratin/hair/skin genes",
+            "Some pain sensitivity variants",
+            "Lipid metabolism genes",
+            "Some linked to depression, blood clotting"
+        ],
+        "modern_distribution": "~1-4% in all non-Africans. Europeans and East Asians carry "
+                              "different Neanderthal segments. Sub-Saharan Africans have minimal.",
+        "pmid": ["24352235", "24476815", "26194313", "29058716"]
+    },
+    "DENISOVAN": {
+        "name": "Denisovan Introgression",
+        "abbreviation": "Denisovan",
+        "time_period": "~50,000-30,000 years ago (introgression events)",
+        "description": "Archaic human species known primarily from DNA. Interbred with ancestors "
+                      "of Melanesians, Aboriginal Australians, and some East/South Asians.",
+        "geographic_origin": "Siberia/Central Asia (Denisova Cave), likely broader Asian range",
+        "traits_contributed": [
+            "High-altitude adaptation (EPAS1 in Tibetans)",
+            "Immune genes",
+            "Fat metabolism",
+            "Possible cold adaptation"
+        ],
+        "modern_distribution": "Highest in Melanesians/Papuans (~3-6%). Lower in East Asians, "
+                              "South Asians. Minimal in Europeans and Africans.",
+        "pmid": ["24352235", "25043035", "29058716"]
+    }
+}
 
 # =============================================================================
-# ANCESTRY INFORMATIVE MARKERS (AIMs)
+# ANCIENT ANCESTRY MARKERS
 # =============================================================================
 
-# Population frequency data from 1000 Genomes (PMID: 26432245) and published studies
-# Format: rsid -> {populations: {pop: allele_freq}, ancestry_info, pmid}
+# Markers with strong ancient population associations
+# Based on ancient DNA studies and selection scans
 
-ANCESTRY_INFORMATIVE_MARKERS = {
+ANCIENT_ANCESTRY_MARKERS = {
     # =========================================================================
-    # CONTINENTAL-LEVEL MARKERS (High differentiation)
+    # WESTERN HUNTER-GATHERER (WHG) SIGNALS
     # =========================================================================
     
-    # SLC24A5 - Major skin pigmentation gene (European selection)
-    "rs1426654": {
-        "gene": "SLC24A5",
-        "trait": "skin_pigmentation",
-        "ancestral": "G",
-        "derived": "A",
-        "frequencies": {
-            "EUR": 0.98,
-            "AFR": 0.03,
-            "EAS": 0.03,
-            "SAS": 0.85,
-            "AMR": 0.55,
+    # Blue eyes - WHG signature (later spread by Steppe)
+    "rs12913832": {
+        "gene": "HERC2/OCA2",
+        "trait": "Blue eyes",
+        "ancestral_population": "WHG",
+        "derived_allele": "G",
+        "ancestral_allele": "A",
+        "population_frequencies": {
+            "WHG": 0.90,  # Ancient samples show high frequency
+            "EEF": 0.05,  # Rare in early farmers
+            "Steppe": 0.50,  # Intermediate
         },
-        "delta": 0.95,
-        "informativeness": "continental",
-        "pmid": ["16357253", "26432245"]
+        "signal_interpretation": {
+            "GG": "Strong WHG signal (blue eyes likely originated in Mesolithic Europe)",
+            "AG": "Moderate WHG signal",
+            "AA": "Ancestral state (brown eyes, minimal WHG signal at this locus)"
+        },
+        "note": "Blue eyes were present in WHG like Loschbour and La Braña individuals",
+        "pmid": ["24463515", "25230663", "26595274"]
     },
     
-    # SLC45A2 - Skin/hair pigmentation
+    # SLC45A2 - Skin pigmentation (WHG had dark skin!)
     "rs16891982": {
         "gene": "SLC45A2",
-        "trait": "skin_pigmentation",
-        "ancestral": "C",
-        "derived": "G",
-        "frequencies": {
-            "EUR": 0.96,
-            "AFR": 0.02,
-            "EAS": 0.02,
-            "SAS": 0.15,
-            "AMR": 0.45,
+        "trait": "Skin pigmentation",
+        "ancestral_population": "EEF/Steppe",  # Light skin came LATER
+        "derived_allele": "G",
+        "ancestral_allele": "C",
+        "population_frequencies": {
+            "WHG": 0.05,  # WHG had dark skin
+            "EEF": 0.80,  # Farmers brought lighter skin
+            "Steppe": 0.95,  # Strongly selected
         },
-        "delta": 0.94,
-        "informativeness": "continental",
-        "pmid": ["17999355", "26432245"]
+        "signal_interpretation": {
+            "GG": "Derived state (lighter skin - EEF/Steppe signal)",
+            "CG": "Heterozygous",
+            "CC": "Ancestral state (darker skin - possible WHG retention)"
+        },
+        "note": "Contrary to stereotypes, European hunter-gatherers had dark skin",
+        "pmid": ["25230663", "26595274", "24463515"]
     },
     
-    # HERC2/OCA2 - Eye color (European)
-    "rs12913832": {
-        "gene": "HERC2",
-        "trait": "eye_color",
-        "ancestral": "A",
-        "derived": "G",
-        "frequencies": {
-            "EUR": 0.75,
-            "AFR": 0.01,
-            "EAS": 0.01,
-            "SAS": 0.10,
-            "AMR": 0.35,
+    # =========================================================================
+    # EARLY EUROPEAN FARMER (EEF) SIGNALS
+    # =========================================================================
+    
+    # SLC24A5 - Major skin lightening (selected in farmers)
+    "rs1426654": {
+        "gene": "SLC24A5",
+        "trait": "Skin pigmentation",
+        "ancestral_population": "EEF",
+        "derived_allele": "A",
+        "ancestral_allele": "G",
+        "population_frequencies": {
+            "WHG": 0.10,  # Low in hunter-gatherers
+            "EEF": 0.95,  # High in Neolithic farmers
+            "Steppe": 0.95,  # Also high
         },
-        "delta": 0.74,
-        "informativeness": "european_indicator",
-        "pmid": ["18252222", "26432245"]
+        "signal_interpretation": {
+            "AA": "Strong EEF/post-Neolithic signal (nearly fixed in Europeans)",
+            "AG": "Heterozygous (rare in Europeans)",
+            "GG": "Ancestral African/WHG-like state (very rare in Europeans)"
+        },
+        "note": "Selected for vitamin D synthesis on grain-based diet with less fish",
+        "pmid": ["16357253", "26595274", "25230663"]
     },
     
-    # LCT - Lactase persistence (European, some African)
+    # NAT2 - Metabolic adaptation to plant-based diet
+    "rs1801280": {
+        "gene": "NAT2",
+        "trait": "Acetylator status (drug/food metabolism)",
+        "ancestral_population": "EEF",
+        "derived_allele": "A",
+        "ancestral_allele": "G",
+        "population_frequencies": {
+            "WHG": 0.20,
+            "EEF": 0.60,
+            "Steppe": 0.40,
+        },
+        "signal_interpretation": {
+            "AA": "Slow acetylator (EEF dietary adaptation signal)",
+            "AG": "Intermediate",
+            "GG": "Fast acetylator"
+        },
+        "note": "Slow acetylation may have been advantageous for plant toxin metabolism",
+        "pmid": ["26595274", "25731166"]
+    },
+    
+    # =========================================================================
+    # STEPPE PASTORALIST SIGNALS
+    # =========================================================================
+    
+    # LCT - Lactase persistence (STRONG Steppe signature)
     "rs4988235": {
         "gene": "LCT",
-        "trait": "lactase_persistence",
-        "ancestral": "G",
-        "derived": "A",
-        "frequencies": {
-            "EUR": 0.75,
-            "AFR": 0.10,
-            "EAS": 0.02,
-            "SAS": 0.25,
-            "AMR": 0.40,
+        "trait": "Lactase persistence (adult milk digestion)",
+        "ancestral_population": "Steppe",
+        "derived_allele": "A",
+        "ancestral_allele": "G",
+        "population_frequencies": {
+            "WHG": 0.00,  # Absent in hunter-gatherers
+            "EEF": 0.05,  # Very rare in early farmers
+            "Steppe": 0.30,  # Present, then rapidly selected
         },
-        "delta": 0.73,
-        "informativeness": "european_indicator",
-        "pmid": ["11788828", "26432245"]
+        "signal_interpretation": {
+            "AA": "Strong lactase persistence (Steppe pastoralist signature)",
+            "AG": "Likely lactase persistent (Steppe signal)",
+            "GG": "Lactase non-persistent (ancestral pre-Steppe state)"
+        },
+        "note": "Rose from ~10% to ~80% in Europe in just 4,000 years - strongest "
+               "known selection in recent human evolution. Steppe pastoralists "
+               "brought cattle-herding culture.",
+        "pmid": ["25731166", "26595274", "26062507"]
     },
     
-    # EDAR - Hair morphology (East Asian)
-    "rs3827760": {
-        "gene": "EDAR",
-        "trait": "hair_morphology",
-        "ancestral": "A",
-        "derived": "G",
-        "frequencies": {
-            "EUR": 0.01,
-            "AFR": 0.00,
-            "EAS": 0.93,
-            "SAS": 0.05,
-            "AMR": 0.65,
+    # FADS genes - Fatty acid metabolism (Steppe diet adaptation)
+    "rs174546": {
+        "gene": "FADS1",
+        "trait": "Fatty acid desaturation",
+        "ancestral_population": "Steppe",
+        "derived_allele": "T",
+        "ancestral_allele": "C",
+        "population_frequencies": {
+            "WHG": 0.30,
+            "EEF": 0.40,
+            "Steppe": 0.70,
         },
-        "delta": 0.93,
-        "informativeness": "east_asian_specific",
-        "pmid": ["18561325", "26432245"]
+        "signal_interpretation": {
+            "TT": "Efficient plant-based omega-3 conversion (selected post-Steppe)",
+            "CT": "Intermediate",
+            "CC": "Relies more on dietary omega-3 (fish-eating adaptation)"
+        },
+        "note": "Selection for converting plant omega-3 to brain-essential DHA",
+        "pmid": ["26595274", "27182965"]
     },
     
-    # ABCC11 - Earwax/body odor (East Asian)
-    "rs17822931": {
-        "gene": "ABCC11",
-        "trait": "earwax_type",
-        "ancestral": "G",
-        "derived": "A",
-        "frequencies": {
-            "EUR": 0.12,
-            "AFR": 0.02,
-            "EAS": 0.95,
-            "SAS": 0.15,
-            "AMR": 0.55,
+    # Height-associated variant (Steppe were taller)
+    "rs1042725": {
+        "gene": "HMGA2",
+        "trait": "Height",
+        "ancestral_population": "Steppe",
+        "derived_allele": "C",
+        "ancestral_allele": "T",
+        "population_frequencies": {
+            "WHG": 0.40,
+            "EEF": 0.30,  # Farmers were shorter
+            "Steppe": 0.60,  # Steppe were tall
         },
-        "delta": 0.93,
-        "informativeness": "east_asian_specific",
-        "pmid": ["16444273", "26432245"]
-    },
-    
-    # Duffy antigen - African malaria adaptation
-    "rs2814778": {
-        "gene": "DARC",
-        "trait": "duffy_null",
-        "ancestral": "T",
-        "derived": "C",
-        "frequencies": {
-            "EUR": 0.00,
-            "AFR": 0.97,
-            "EAS": 0.00,
-            "SAS": 0.00,
-            "AMR": 0.15,
+        "signal_interpretation": {
+            "CC": "Height-increasing allele (Steppe signal)",
+            "CT": "Intermediate",
+            "TT": "Height-decreasing allele"
         },
-        "delta": 0.97,
-        "informativeness": "african_specific",
-        "pmid": ["11171069", "26432245"]
+        "note": "Steppe pastoralists were significantly taller than Neolithic farmers",
+        "pmid": ["26595274", "25731166"]
     },
     
     # =========================================================================
-    # ADDITIONAL CONTINENTAL MARKERS
+    # NEANDERTHAL INTROGRESSION MARKERS
     # =========================================================================
     
-    "rs1800414": {
-        "gene": "OCA2",
-        "trait": "pigmentation",
-        "frequencies": {
-            "EUR": 0.05,
-            "AFR": 0.00,
-            "EAS": 0.65,
-            "SAS": 0.10,
-            "AMR": 0.35,
+    # BNC2 - Skin/freckling (Neanderthal origin)
+    "rs10756819": {
+        "gene": "BNC2",
+        "trait": "Skin pigmentation, freckling",
+        "ancestral_population": "Neanderthal",
+        "derived_allele": "G",
+        "ancestral_allele": "A",
+        "population_frequencies": {
+            "Neanderthal": 0.90,
+            "Modern_EUR": 0.70,
+            "Modern_AFR": 0.05,
         },
-        "delta": 0.65,
-        "informativeness": "east_asian_indicator",
-        "pmid": ["17952075", "26432245"]
-    },
-    
-    "rs2228479": {
-        "gene": "MC1R",
-        "trait": "pigmentation",
-        "frequencies": {
-            "EUR": 0.12,
-            "AFR": 0.00,
-            "EAS": 0.00,
-            "SAS": 0.02,
-            "AMR": 0.05,
+        "signal_interpretation": {
+            "GG": "Neanderthal-introgressed allele (associated with lighter skin, freckling)",
+            "AG": "Heterozygous for Neanderthal variant",
+            "AA": "Modern human ancestral state"
         },
-        "delta": 0.12,
-        "informativeness": "european_indicator",
-        "pmid": ["11017081", "26432245"]
+        "note": "This region shows strong evidence of adaptive introgression from Neanderthals",
+        "pmid": ["24476815", "26194313", "28133863"]
     },
     
-    "rs885479": {
-        "gene": "MC1R",
-        "trait": "pigmentation",
-        "frequencies": {
-            "EUR": 0.03,
-            "AFR": 0.00,
-            "EAS": 0.65,
-            "SAS": 0.15,
-            "AMR": 0.30,
+    # OAS1 - Immune function (Neanderthal-derived)
+    "rs10774671": {
+        "gene": "OAS1",
+        "trait": "Antiviral immune response",
+        "ancestral_population": "Neanderthal",
+        "derived_allele": "G",
+        "ancestral_allele": "A",
+        "population_frequencies": {
+            "Neanderthal": 1.00,
+            "Modern_EUR": 0.35,
+            "Modern_EAS": 0.40,
+            "Modern_AFR": 0.05,
         },
-        "delta": 0.65,
-        "informativeness": "east_asian_indicator",
-        "pmid": ["11017081", "26432245"]
-    },
-    
-    # Native American informative
-    "rs3811801": {
-        "gene": "FUT2",
-        "trait": "secretor_status",
-        "frequencies": {
-            "EUR": 0.45,
-            "AFR": 0.35,
-            "EAS": 0.40,
-            "SAS": 0.40,
-            "AMR": 0.10,
+        "signal_interpretation": {
+            "GG": "Neanderthal-introgressed immune variant",
+            "AG": "Heterozygous",
+            "AA": "Modern human ancestral state"
         },
-        "delta": 0.35,
-        "informativeness": "native_american_indicator",
-        "pmid": ["26432245"]
+        "note": "Neanderthal OAS variants may provide enhanced antiviral defense",
+        "pmid": ["24476815", "26194313", "27654910"]
     },
     
-    # South Asian informative markers
-    "rs1042602": {
-        "gene": "TYR",
-        "trait": "pigmentation",
-        "frequencies": {
-            "EUR": 0.40,
-            "AFR": 0.05,
-            "EAS": 0.02,
-            "SAS": 0.30,
-            "AMR": 0.25,
+    # TLR genes - Pathogen response (Neanderthal origin)
+    "rs5743810": {
+        "gene": "TLR6",
+        "trait": "Pathogen recognition, immune response",
+        "ancestral_population": "Neanderthal",
+        "derived_allele": "G",
+        "ancestral_allele": "A",
+        "population_frequencies": {
+            "Neanderthal": 0.95,
+            "Modern_EUR": 0.45,
+            "Modern_EAS": 0.30,
+            "Modern_AFR": 0.02,
         },
-        "delta": 0.38,
-        "informativeness": "subcontinental",
-        "pmid": ["18483556", "26432245"]
+        "signal_interpretation": {
+            "GG": "Neanderthal-introgressed immune variant",
+            "AG": "Heterozygous for Neanderthal variant",
+            "AA": "Modern human ancestral state"
+        },
+        "note": "Toll-like receptor variants from Neanderthals help fight pathogens",
+        "pmid": ["26194313", "29058716"]
     },
     
-    "rs260690": {
-        "gene": "TYRP1",
-        "frequencies": {"EUR": 0.50, "AFR": 0.08, "EAS": 0.15, "SAS": 0.25, "AMR": 0.30},
-        "delta": 0.42,
-        "informativeness": "continental",
-        "pmid": ["26432245"]
+    # SLC16A11 - Type 2 diabetes risk (Neanderthal)
+    "rs13342232": {
+        "gene": "SLC16A11",
+        "trait": "Type 2 diabetes risk, lipid metabolism",
+        "ancestral_population": "Neanderthal",
+        "derived_allele": "T",
+        "ancestral_allele": "C",
+        "population_frequencies": {
+            "Neanderthal": 1.00,
+            "Modern_AMR": 0.50,  # High in Native Americans/Mexicans
+            "Modern_EAS": 0.10,
+            "Modern_EUR": 0.02,
+            "Modern_AFR": 0.00,
+        },
+        "signal_interpretation": {
+            "TT": "Neanderthal-derived diabetes risk variant",
+            "CT": "Heterozygous carrier",
+            "CC": "Modern human ancestral (lower risk)"
+        },
+        "note": "Neanderthal variant that increases T2D risk, common in Native Americans",
+        "pmid": ["24476815", "25282103"]
     },
     
-    "rs1408799": {
-        "gene": "TYRP1",
-        "frequencies": {"EUR": 0.75, "AFR": 0.15, "EAS": 0.20, "SAS": 0.35, "AMR": 0.45},
-        "delta": 0.60,
-        "informativeness": "continental",
-        "pmid": ["26432245"]
+    # =========================================================================
+    # DENISOVAN MARKERS
+    # =========================================================================
+    
+    # EPAS1 - High altitude adaptation (Denisovan in Tibetans)
+    "rs115321619": {
+        "gene": "EPAS1",
+        "trait": "High altitude adaptation",
+        "ancestral_population": "Denisovan",
+        "derived_allele": "G",
+        "ancestral_allele": "A",
+        "population_frequencies": {
+            "Denisovan": 1.00,
+            "Tibetan": 0.87,  # Strong selection at altitude
+            "Han_Chinese": 0.09,
+            "Modern_EUR": 0.00,
+        },
+        "signal_interpretation": {
+            "GG": "Denisovan-introgressed high-altitude allele (Tibetan signature)",
+            "AG": "Heterozygous (rare outside Tibet)",
+            "AA": "Normal low-altitude state"
+        },
+        "note": "Denisovan variant enables Tibetans to thrive at high altitude. "
+               "Classic example of adaptive introgression.",
+        "pmid": ["25043035", "24976165"]
     },
     
-    "rs7495174": {
-        "gene": "OCA2",
-        "frequencies": {"EUR": 0.85, "AFR": 0.02, "EAS": 0.65, "SAS": 0.50, "AMR": 0.55},
-        "delta": 0.83,
-        "informativeness": "continental",
-        "pmid": ["26432245"]
-    },
-    
-    "rs4778138": {
-        "gene": "OCA2",
-        "frequencies": {"EUR": 0.80, "AFR": 0.15, "EAS": 0.65, "SAS": 0.45, "AMR": 0.50},
-        "delta": 0.65,
-        "informativeness": "continental",
-        "pmid": ["26432245"]
-    },
-    
-    "rs1393350": {
-        "gene": "TYR",
-        "frequencies": {"EUR": 0.25, "AFR": 0.05, "EAS": 0.01, "SAS": 0.08, "AMR": 0.12},
-        "delta": 0.24,
-        "informativeness": "european_indicator",
-        "pmid": ["26432245"]
-    },
-    
-    "rs2305498": {
-        "frequencies": {"EUR": 0.30, "AFR": 0.65, "EAS": 0.25, "SAS": 0.35, "AMR": 0.40},
-        "delta": 0.40,
-        "informativeness": "african_indicator",
-        "pmid": ["26432245"]
-    },
-    
-    "rs10843104": {
-        "frequencies": {"EUR": 0.15, "AFR": 0.75, "EAS": 0.10, "SAS": 0.20, "AMR": 0.35},
-        "delta": 0.65,
-        "informativeness": "african_indicator",
-        "pmid": ["26432245"]
-    },
-    
-    "rs2789823": {
-        "frequencies": {"EUR": 0.45, "AFR": 0.10, "EAS": 0.85, "SAS": 0.30, "AMR": 0.50},
-        "delta": 0.75,
-        "informativeness": "east_asian_indicator",
-        "pmid": ["26432245"]
-    },
-    
-    "rs2070959": {
-        "gene": "UGT1A1",
-        "frequencies": {"EUR": 0.35, "AFR": 0.45, "EAS": 0.12, "SAS": 0.25, "AMR": 0.30},
-        "delta": 0.33,
-        "informativeness": "subcontinental",
-        "pmid": ["26432245"]
+    # TBX15/WARS2 - Body fat distribution (possible Denisovan)
+    "rs2298080": {
+        "gene": "TBX15",
+        "trait": "Body fat distribution, ear morphology",
+        "ancestral_population": "Denisovan",
+        "derived_allele": "C",
+        "ancestral_allele": "T",
+        "population_frequencies": {
+            "Denisovan": 0.95,
+            "Modern_EAS": 0.65,
+            "Inuit": 0.80,
+            "Modern_EUR": 0.20,
+        },
+        "signal_interpretation": {
+            "CC": "Possible Denisovan-introgressed body fat/cold adaptation",
+            "CT": "Heterozygous",
+            "TT": "Modern human ancestral state"
+        },
+        "note": "May be related to cold adaptation, high in Arctic populations",
+        "pmid": ["25043035", "29058716"]
     },
 }
 
 # =============================================================================
-# POPULATION REFERENCE DATA
+# ANALYSIS FUNCTIONS
 # =============================================================================
 
-POPULATION_DESCRIPTIONS = {
-    "EUR": {
-        "name": "European",
-        "abbreviation": "EUR",
-        "description": "European ancestry - cannot distinguish sub-regions (Northern, Southern, Eastern, Western)",
-        "limitations": [
-            "Cannot distinguish British from German from Italian",
-            "Cannot identify specific European country of origin",
-            "Reflects genetic similarity, not cultural/national identity"
-        ],
-        "typical_haplogroups_mtdna": ["H", "U", "K", "J", "T", "V"],
-        "typical_haplogroups_ydna": ["R1b", "R1a", "I", "J2", "E1b1b"],
-        "pmid": ["26432245", "12493913"]
-    },
-    "AFR": {
-        "name": "African",
-        "abbreviation": "AFR",
-        "description": "Sub-Saharan African ancestry - cannot distinguish sub-regions",
-        "limitations": [
-            "Cannot distinguish West African from East African",
-            "Cannot identify specific ethnic groups or countries",
-            "African genetic diversity is highest globally"
-        ],
-        "typical_haplogroups_mtdna": ["L0", "L1", "L2", "L3"],
-        "typical_haplogroups_ydna": ["E", "A", "B"],
-        "pmid": ["26432245", "12493913"]
-    },
-    "EAS": {
-        "name": "East Asian",
-        "abbreviation": "EAS",
-        "description": "East Asian ancestry - cannot distinguish Chinese, Japanese, Korean, etc.",
-        "limitations": [
-            "Cannot distinguish Chinese from Japanese from Korean",
-            "Cannot identify specific sub-populations",
-            "Southeast Asian may appear as partial East Asian"
-        ],
-        "typical_haplogroups_mtdna": ["D", "B", "F", "A", "C", "M"],
-        "typical_haplogroups_ydna": ["O", "C", "D", "N"],
-        "pmid": ["26432245", "12493913"]
-    },
-    "SAS": {
-        "name": "South Asian",
-        "abbreviation": "SAS",
-        "description": "South Asian ancestry - cannot distinguish specific regions",
-        "limitations": [
-            "Cannot distinguish Indian from Pakistani from Bangladeshi",
-            "Cannot identify caste or ethnic group",
-            "High internal diversity in South Asia"
-        ],
-        "typical_haplogroups_mtdna": ["M", "R", "U"],
-        "typical_haplogroups_ydna": ["R1a", "H", "L", "J2"],
-        "pmid": ["26432245", "12493913"]
-    },
-    "AMR": {
-        "name": "Americas (Indigenous + Admixed)",
-        "abbreviation": "AMR",
-        "description": "Indigenous American ancestry component - highly variable",
-        "limitations": [
-            "Most individuals with AMR ancestry are admixed",
-            "Cannot distinguish specific Indigenous groups",
-            "Pre-Columbian diversity not well captured"
-        ],
-        "typical_haplogroups_mtdna": ["A", "B", "C", "D", "X"],
-        "typical_haplogroups_ydna": ["Q", "C"],
-        "pmid": ["26432245", "12493913"]
-    },
-}
+def detect_ancient_signals(genotypes: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Detect ancient ancestral population signals in genotype data.
+    
+    Returns detected signals (not percentages) for each ancient population,
+    along with which specific markers were found.
+    
+    Args:
+        genotypes: Dict mapping rsid -> genotype
+        
+    Returns:
+        Dict with signals detected for each ancient population
+    """
+    results = {
+        "methodology": {
+            "description": "Detection of ancient ancestral population signals using "
+                          "ancestry-informative markers from ancient DNA studies",
+            "approach": "Signal detection, not percentage estimation",
+            "note": "Signals indicate presence of ancestry; strength reflects marker count, "
+                   "not precise ancestry proportions",
+            "pmid": ["25230663", "25731166", "24352235"]
+        },
+        "populations": {},
+        "markers_found": 0,
+        "markers_checked": len(ANCIENT_ANCESTRY_MARKERS)
+    }
+    
+    # Initialize population signal tracking
+    population_signals = {
+        "WHG": {"markers_found": [], "signal_strength": "none"},
+        "EEF": {"markers_found": [], "signal_strength": "none"},
+        "STEPPE": {"markers_found": [], "signal_strength": "none"},
+        "NEANDERTHAL": {"markers_found": [], "signal_strength": "none"},
+        "DENISOVAN": {"markers_found": [], "signal_strength": "none"},
+    }
+    
+    # Check each marker
+    for rsid, info in ANCIENT_ANCESTRY_MARKERS.items():
+        geno = genotypes.get(rsid)
+        if not geno:
+            continue
+            
+        results["markers_found"] += 1
+        
+        # Determine which population this marker signals
+        anc_pop = info.get("ancestral_population", "").upper()
+        if anc_pop == "WHG":
+            pop_key = "WHG"
+        elif anc_pop in ["EEF", "NEOLITHIC"]:
+            pop_key = "EEF"
+        elif anc_pop in ["STEPPE", "YAMNAYA"]:
+            pop_key = "STEPPE"
+        elif anc_pop == "NEANDERTHAL":
+            pop_key = "NEANDERTHAL"
+        elif anc_pop == "DENISOVAN":
+            pop_key = "DENISOVAN"
+        else:
+            continue
+        
+        # Check if derived allele is present
+        derived = info.get("derived_allele", "")
+        derived_count = geno.upper().count(derived.upper()) if derived else 0
+        
+        # Get interpretation
+        interp = info.get("signal_interpretation", {}).get(geno, "")
+        
+        if derived_count > 0:
+            population_signals[pop_key]["markers_found"].append({
+                "rsid": rsid,
+                "gene": info.get("gene", ""),
+                "trait": info.get("trait", ""),
+                "genotype": geno,
+                "derived_copies": derived_count,
+                "interpretation": interp,
+                "pmid": info.get("pmid", [])
+            })
+    
+    # Calculate signal strength for each population
+    for pop_key, data in population_signals.items():
+        marker_count = len(data["markers_found"])
+        
+        if marker_count == 0:
+            data["signal_strength"] = "not detected"
+            data["signal_description"] = "No markers found for this ancestral population"
+        elif marker_count == 1:
+            data["signal_strength"] = "weak"
+            data["signal_description"] = "Single marker detected - signal present but limited"
+        elif marker_count == 2:
+            data["signal_strength"] = "moderate"
+            data["signal_description"] = "Multiple markers detected - clear signal present"
+        else:
+            data["signal_strength"] = "strong"
+            data["signal_description"] = "Multiple markers detected - strong ancestral signal"
+        
+        # Add population info
+        pop_info = ANCIENT_POPULATIONS.get(pop_key, {})
+        results["populations"][pop_key] = {
+            "name": pop_info.get("name", pop_key),
+            "time_period": pop_info.get("time_period", "Unknown"),
+            "description": pop_info.get("description", ""),
+            "traits_contributed": pop_info.get("traits_contributed", []),
+            "signal_strength": data["signal_strength"],
+            "signal_description": data["signal_description"],
+            "markers_detected": data["markers_found"],
+            "marker_count": marker_count,
+            "pmid": pop_info.get("pmid", [])
+        }
+    
+    return results
 
 
+def get_ancestry_summary(genotypes: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Complete ancient ancestry analysis.
+    
+    Returns signal detection results for ancient populations,
+    NOT modern ethnicity percentages.
+    """
+    signals = detect_ancient_signals(genotypes)
+    
+    return {
+        "analysis_type": "ancient_ancestral_signals",
+        "disclaimer": (
+            "This analysis detects SIGNALS from ancient ancestral populations, "
+            "not modern ethnicity percentages. Modern ethnicity estimates are "
+            "scientifically unreliable from consumer DNA arrays. Ancient signals "
+            "are based on well-characterized ancient DNA studies."
+        ),
+        "signals": signals,
+        "summary": _generate_signals_summary(signals),
+        "educational_note": (
+            "All non-African humans are ~98% 'anatomically modern human' with "
+            "~1-4% archaic (Neanderthal/Denisovan) ancestry. Europeans are a "
+            "mixture of three main ancient populations: Mesolithic hunter-gatherers, "
+            "Neolithic farmers from Anatolia, and Bronze Age Steppe pastoralists."
+        )
+    }
+
+
+def _generate_signals_summary(signals: Dict) -> str:
+    """Generate human-readable summary of ancient signals."""
+    lines = []
+    
+    lines.append("ANCIENT ANCESTRAL SIGNALS DETECTED")
+    lines.append("=" * 40)
+    lines.append("")
+    lines.append("Note: These are signal detections, not precise percentages.")
+    lines.append("Signal strength reflects marker availability, not ancestry proportion.")
+    lines.append("")
+    
+    for pop_key in ["WHG", "EEF", "STEPPE", "NEANDERTHAL", "DENISOVAN"]:
+        pop = signals.get("populations", {}).get(pop_key, {})
+        name = pop.get("name", pop_key)
+        strength = pop.get("signal_strength", "unknown")
+        period = pop.get("time_period", "")
+        count = pop.get("marker_count", 0)
+        
+        # Signal indicator
+        if strength == "strong":
+            indicator = "●●●"
+        elif strength == "moderate":
+            indicator = "●●○"
+        elif strength == "weak":
+            indicator = "●○○"
+        else:
+            indicator = "○○○"
+        
+        lines.append(f"{name}")
+        lines.append(f"  Time: {period}")
+        lines.append(f"  Signal: {indicator} {strength.upper()} ({count} markers)")
+        
+        if count > 0:
+            traits = pop.get("traits_contributed", [])[:3]
+            if traits:
+                lines.append(f"  Traits: {', '.join(traits)}")
+        
+        lines.append("")
+    
+    return "\n".join(lines)
+
+
+# =============================================================================
+# LEGACY COMPATIBILITY
+# =============================================================================
+
+# Keep old function names for compatibility, but they now use ancient signals
+
+def estimate_ancestry(genotypes: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Legacy compatibility function.
+    Now returns ancient signals instead of modern ethnicity estimates.
+    """
+    return get_ancestry_summary(genotypes)
+
+
+def detect_admixture(genotypes: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Legacy compatibility function.
+    Admixture in ancient context means mixing of ancient populations.
+    """
+    signals = detect_ancient_signals(genotypes)
+    
+    # Count populations with signals
+    detected_pops = [
+        p for p, data in signals.get("populations", {}).items()
+        if data.get("signal_strength") not in ["not detected", "none"]
+    ]
+    
+    return {
+        "analysis_type": "ancient_population_mixture",
+        "note": "All modern Europeans are mixtures of ancient populations",
+        "populations_detected": detected_pops,
+        "interpretation": (
+            f"Signals from {len(detected_pops)} ancient populations detected. "
+            "This is expected - modern humans outside Africa are mixtures of "
+            "ancient populations including archaic humans (Neanderthal/Denisovan)."
+        )
+    }
+
+
+# Wilson CI function kept for PRS module
 def calculate_wilson_confidence_interval(
     successes: int,
     trials: int,
@@ -429,21 +678,11 @@ def calculate_wilson_confidence_interval(
 ) -> Tuple[float, float]:
     """
     Calculate Wilson score confidence interval for a proportion.
-    
-    More accurate than normal approximation, especially for extreme proportions.
-    
-    Args:
-        successes: Number of "successes" (matching alleles)
-        trials: Total number of trials
-        confidence: Confidence level (default 95%)
-        
-    Returns:
-        Tuple of (lower_bound, upper_bound) as proportions
+    Kept for use by other modules (PRS).
     """
     if trials == 0:
         return (0.0, 1.0)
     
-    # Z-score for confidence level
     z = 1.96 if confidence == 0.95 else 1.645 if confidence == 0.90 else 2.576
     
     p_hat = successes / trials
@@ -457,334 +696,3 @@ def calculate_wilson_confidence_interval(
     upper = min(1, center + margin)
     
     return (lower, upper)
-
-
-def estimate_ancestry(genotypes: Dict[str, str]) -> Dict[str, Any]:
-    """
-    Estimate ancestry composition from available AIMs.
-    
-    Returns CONTINENTAL-LEVEL estimates only with confidence intervals.
-    Sub-regional ancestry (e.g., Irish vs Scottish) CANNOT be reliably determined.
-    
-    Args:
-        genotypes: Dict mapping rsid -> genotype
-        
-    Returns:
-        Dict with ancestry estimates, confidence intervals, and methodology notes
-    """
-    # Initialize population scores
-    populations = ["EUR", "AFR", "EAS", "SAS", "AMR"]
-    log_likelihoods = {pop: 0.0 for pop in populations}
-    markers_used = 0
-    marker_details = []
-    all_pmids = set()
-    
-    for rsid, info in ANCESTRY_INFORMATIVE_MARKERS.items():
-        geno = genotypes.get(rsid)
-        if not geno:
-            continue
-        
-        freqs = info.get("frequencies", {})
-        if not all(pop in freqs for pop in populations):
-            continue
-        
-        markers_used += 1
-        
-        # Collect PMIDs
-        if "pmid" in info:
-            all_pmids.update(info["pmid"])
-        
-        # Determine allele count
-        derived = info.get("derived", info.get("ancestral", ""))
-        
-        derived_count = sum(1 for a in geno if a.upper() == derived.upper())
-        
-        # Calculate genotype probability for each population
-        for pop in populations:
-            p = freqs.get(pop, 0.5)
-            q = 1 - p
-            
-            # Avoid log(0)
-            p = max(0.001, min(0.999, p))
-            q = max(0.001, min(0.999, q))
-            
-            if derived_count == 2:
-                prob = p * p
-            elif derived_count == 1:
-                prob = 2 * p * q
-            else:
-                prob = q * q
-            
-            log_likelihoods[pop] += math.log(prob)
-        
-        # Track informative markers
-        if info.get("delta", 0) > 0.3:
-            marker_details.append({
-                "rsid": rsid,
-                "gene": info.get("gene", ""),
-                "genotype": geno,
-                "informativeness": info.get("informativeness"),
-                "pmid": info.get("pmid", [])
-            })
-    
-    # Convert log-likelihoods to proportions
-    if markers_used < 3:
-        return {
-            "status": "insufficient_data",
-            "markers_found": markers_used,
-            "error": "Need at least 3 ancestry informative markers for estimation",
-            "disclaimer": ANCESTRY_DISCLAIMER
-        }
-    
-    # Normalize to probabilities (softmax-like)
-    max_ll = max(log_likelihoods.values())
-    exp_lls = {pop: math.exp(ll - max_ll) for pop, ll in log_likelihoods.items()}
-    total = sum(exp_lls.values())
-    
-    # Calculate point estimates (whole numbers only - no false precision)
-    proportions = {pop: round(exp_ll / total * 100) for pop, exp_ll in exp_lls.items()}
-    
-    # Ensure proportions sum to 100
-    diff = 100 - sum(proportions.values())
-    if diff != 0:
-        max_pop = max(proportions.keys(), key=lambda p: proportions[p])
-        proportions[max_pop] += diff
-    
-    # Calculate confidence intervals based on marker count
-    # More markers = narrower intervals
-    confidence_intervals = {}
-    for pop, pct in proportions.items():
-        # Use Wilson interval treating proportion as binomial
-        # Approximate "successes" based on proportion and marker count
-        successes = int(pct / 100 * markers_used * 2)  # diploid
-        trials = markers_used * 2
-        
-        lower, upper = calculate_wilson_confidence_interval(successes, trials)
-        
-        # Convert to percentage and widen based on low marker count
-        # Minimum ±10% uncertainty for ancestry estimates
-        interval_width = max(10, int((upper - lower) * 100))
-        
-        ci_lower = max(0, pct - interval_width // 2)
-        ci_upper = min(100, pct + interval_width // 2)
-        
-        confidence_intervals[pop] = {
-            "point_estimate": pct,
-            "lower_bound": ci_lower,
-            "upper_bound": ci_upper,
-            "display": f"{pct}% ({ci_lower}-{ci_upper}%)"
-        }
-    
-    # Determine confidence level
-    if markers_used >= 15:
-        confidence = "moderate"
-        confidence_note = "Sufficient markers for rough continental estimate"
-    elif markers_used >= 8:
-        confidence = "low"
-        confidence_note = "Limited markers - wide confidence intervals"
-    else:
-        confidence = "very low"
-        confidence_note = "Few markers found - estimates highly uncertain"
-    
-    # Sort by proportion
-    sorted_ancestry = sorted(proportions.items(), key=lambda x: x[1], reverse=True)
-    
-    # Build result
-    result = {
-        "status": "success",
-        "disclaimer": ANCESTRY_DISCLAIMER,
-        "markers_used": markers_used,
-        "confidence": confidence,
-        "confidence_note": confidence_note,
-        
-        # Ancestry with confidence intervals (continental level only)
-        "ancestry_proportions": {
-            POPULATION_DESCRIPTIONS[pop]["name"]: confidence_intervals[pop]["display"]
-            for pop, pct in sorted_ancestry
-            if pct > 0
-        },
-        
-        # Raw data for programmatic use
-        "ancestry_proportions_raw": proportions,
-        "confidence_intervals": confidence_intervals,
-        
-        "primary_ancestry": POPULATION_DESCRIPTIONS[sorted_ancestry[0][0]]["name"],
-        "primary_percentage": sorted_ancestry[0][1],
-        "primary_range": f"{confidence_intervals[sorted_ancestry[0][0]]['lower_bound']}-{confidence_intervals[sorted_ancestry[0][0]]['upper_bound']}%",
-        
-        "detailed_breakdown": [],
-        
-        "methodology": {
-            "description": "Likelihood-based ancestry estimation using ancestry informative markers (AIMs)",
-            "resolution": "CONTINENTAL ONLY - sub-regional ancestry cannot be determined",
-            "reference_populations": "1000 Genomes Project superpopulations",
-            "marker_count": markers_used,
-            "pmid": sorted(list(all_pmids))
-        },
-        
-        "limitations": [
-            "Can only distinguish continental ancestry (European, African, East Asian, South Asian, Americas)",
-            "CANNOT reliably distinguish sub-regions (e.g., Irish vs Scottish, Nigerian vs Ghanaian)",
-            "Confidence intervals are wide - interpret with caution",
-            "Reference panels may not represent all populations equally",
-            "Modern population labels may not reflect ancient ancestry",
-            "Results should be combined with genealogical paper trail research"
-        ]
-    }
-    
-    # Add detailed breakdown for significant ancestries (>0%)
-    for pop, pct in sorted_ancestry:
-        if pct > 0:
-            pop_info = POPULATION_DESCRIPTIONS.get(pop, {})
-            ci = confidence_intervals[pop]
-            result["detailed_breakdown"].append({
-                "population": pop_info.get("name", pop),
-                "abbreviation": pop,
-                "percentage": pct,
-                "range": f"{ci['lower_bound']}-{ci['upper_bound']}%",
-                "confidence_interval": ci,
-                "description": pop_info.get("description", ""),
-                "limitations": pop_info.get("limitations", []),
-            })
-    
-    # Key informative markers with PMIDs
-    result["informative_markers"] = marker_details[:10]
-    
-    return result
-
-
-def detect_admixture(genotypes: Dict[str, str]) -> Dict[str, Any]:
-    """
-    Detect signs of recent admixture between populations.
-    
-    Recent admixture shows characteristic patterns:
-    - High heterozygosity at AIMs
-    - Mixed ancestry percentages in 20-80% range
-    """
-    ancestry = estimate_ancestry(genotypes)
-    
-    if ancestry.get("status") != "success":
-        return {
-            "status": "insufficient_data",
-            "is_admixed": "unknown",
-            "disclaimer": ANCESTRY_DISCLAIMER
-        }
-    
-    proportions = ancestry.get("ancestry_proportions_raw", {})
-    
-    # Count populations with significant contribution
-    significant_pops = sum(1 for pct in proportions.values() if pct >= 15)
-    
-    # Check heterozygosity at high-delta AIMs
-    het_count = 0
-    aim_count = 0
-    
-    for rsid, info in ANCESTRY_INFORMATIVE_MARKERS.items():
-        if info.get("delta", 0) < 0.5:
-            continue
-            
-        geno = genotypes.get(rsid)
-        if not geno or len(geno) < 2:
-            continue
-            
-        aim_count += 1
-        if geno[0] != geno[1]:
-            het_count += 1
-    
-    het_rate = het_count / aim_count if aim_count > 0 else 0
-    
-    is_admixed = significant_pops >= 2 or het_rate > 0.6
-    
-    return {
-        "status": "success",
-        "disclaimer": ANCESTRY_DISCLAIMER,
-        "is_admixed": is_admixed,
-        "admixture_confidence": "low" if aim_count < 10 else "moderate",
-        "admixture_evidence": {
-            "populations_with_15pct_plus": significant_pops,
-            "heterozygosity_rate": round(het_rate, 2),
-            "aims_checked": aim_count
-        },
-        "interpretation": _interpret_admixture(proportions, significant_pops, het_rate),
-        "ancestry_summary": ancestry.get("ancestry_proportions", {}),
-        "methodology_note": "Admixture detection based on AIM heterozygosity and multi-population signal"
-    }
-
-
-def _interpret_admixture(proportions: Dict, sig_pops: int, het_rate: float) -> str:
-    """Generate human-readable admixture interpretation."""
-    if sig_pops == 1:
-        top_pop = max(proportions.items(), key=lambda x: x[1])
-        pop_name = POPULATION_DESCRIPTIONS.get(top_pop[0], {}).get('name', top_pop[0])
-        return f"Ancestry appears primarily {pop_name} (note: sub-regional origin cannot be determined)"
-    elif sig_pops == 2:
-        top_two = sorted(proportions.items(), key=lambda x: x[1], reverse=True)[:2]
-        pop1 = POPULATION_DESCRIPTIONS.get(top_two[0][0], {}).get('name', top_two[0][0])
-        pop2 = POPULATION_DESCRIPTIONS.get(top_two[1][0], {}).get('name', top_two[1][0])
-        return f"Possible admixture between {pop1} and {pop2} ancestry (confidence intervals overlap significantly)"
-    else:
-        return "Complex admixture pattern - multiple continental ancestries detected (wide confidence intervals)"
-
-
-def get_ancestry_summary(genotypes: Dict[str, str]) -> Dict[str, Any]:
-    """
-    Complete ancestry analysis with composition and admixture detection.
-    
-    Returns CONTINENTAL-LEVEL estimates only with confidence intervals.
-    """
-    composition = estimate_ancestry(genotypes)
-    admixture = detect_admixture(genotypes)
-    
-    return {
-        "disclaimer": ANCESTRY_DISCLAIMER,
-        "composition": composition,
-        "admixture": admixture,
-        "summary": _generate_ancestry_text_summary(composition, admixture),
-        "methodology": {
-            "approach": "Likelihood-based estimation using ancestry informative markers",
-            "resolution": "Continental level only",
-            "limitations": [
-                "Sub-regional ancestry (countries, ethnic groups) cannot be determined",
-                "All estimates include wide confidence intervals",
-                "Reference panels may not represent all populations equally"
-            ],
-            "pmid": ["26432245", "12493913", "18292342"]
-        }
-    }
-
-
-def _generate_ancestry_text_summary(composition: Dict, admixture: Dict) -> str:
-    """Generate text summary for reports."""
-    lines = []
-    
-    lines.append("⚠️ CONTINENTAL-LEVEL ESTIMATES ONLY")
-    lines.append("Sub-regional ancestry (e.g., specific countries) cannot be reliably determined.")
-    lines.append("")
-    
-    if composition.get("status") != "success":
-        return "Insufficient ancestry informative markers for reliable estimation."
-    
-    primary = composition['primary_ancestry']
-    pct = composition['primary_percentage']
-    range_str = composition.get('primary_range', 'unknown')
-    
-    lines.append(f"Primary ancestry: {primary} — {pct}% (range: {range_str})")
-    lines.append("")
-    
-    lines.append("Full breakdown with confidence intervals:")
-    for pop, display in composition.get("ancestry_proportions", {}).items():
-        lines.append(f"  {pop}: {display}")
-    
-    lines.append("")
-    
-    if admixture.get("is_admixed"):
-        lines.append("Admixture: " + admixture.get("interpretation", "Detected"))
-    else:
-        lines.append("Admixture: No significant multi-continental admixture detected")
-    
-    lines.append("")
-    lines.append(f"Confidence: {composition.get('confidence', 'unknown')}")
-    lines.append(f"Note: {composition.get('confidence_note', '')}")
-    lines.append(f"Markers analyzed: {composition.get('markers_used', 0)}")
-    
-    return "\n".join(lines)

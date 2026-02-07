@@ -161,61 +161,86 @@ class TestHaplogroupDisclaimers:
         assert "limitations" in result["methodology"]
 
 
-class TestAncestryAccuracy:
-    """Test ancestry estimation accuracy features."""
+class TestAncientAncestrySignals:
+    """Test ancient ancestral signals detection."""
     
-    def test_ancestry_disclaimer_present(self):
-        """Test ancestry disclaimer exists."""
-        from markers.ancestry_composition import ANCESTRY_DISCLAIMER
+    def test_ancient_populations_defined(self):
+        """Test all ancient populations are properly defined."""
+        from markers.ancestry_composition import ANCIENT_POPULATIONS
         
-        assert ANCESTRY_DISCLAIMER is not None
-        assert "CONTINENTAL" in ANCESTRY_DISCLAIMER
-        assert "sub-regional" in ANCESTRY_DISCLAIMER.lower() or "sub-region" in ANCESTRY_DISCLAIMER.lower()
+        required_pops = ["WHG", "EEF", "STEPPE", "NEANDERTHAL", "DENISOVAN"]
+        for pop in required_pops:
+            assert pop in ANCIENT_POPULATIONS, f"Missing ancient population: {pop}"
+            
+            info = ANCIENT_POPULATIONS[pop]
+            assert "name" in info, f"{pop} missing name"
+            assert "time_period" in info, f"{pop} missing time_period"
+            assert "traits_contributed" in info, f"{pop} missing traits_contributed"
+            assert "pmid" in info, f"{pop} missing PMID citations"
     
-    def test_ancestry_result_includes_confidence_intervals(self):
-        """Test ancestry estimation includes confidence intervals."""
-        from markers.ancestry_composition import estimate_ancestry
+    def test_ancient_markers_have_pmids(self):
+        """Test all ancient ancestry markers have PMIDs."""
+        from markers.ancestry_composition import ANCIENT_ANCESTRY_MARKERS
         
-        # Create test genotypes with known ancestry markers
+        for rsid, info in ANCIENT_ANCESTRY_MARKERS.items():
+            assert "pmid" in info, f"Marker {rsid} missing PMID"
+            assert len(info["pmid"]) > 0, f"Marker {rsid} has empty PMID list"
+    
+    def test_ancient_markers_have_interpretations(self):
+        """Test markers have signal interpretations."""
+        from markers.ancestry_composition import ANCIENT_ANCESTRY_MARKERS
+        
+        for rsid, info in ANCIENT_ANCESTRY_MARKERS.items():
+            assert "signal_interpretation" in info, f"Marker {rsid} missing signal_interpretation"
+            assert "ancestral_population" in info, f"Marker {rsid} missing ancestral_population"
+    
+    def test_detect_ancient_signals_structure(self):
+        """Test ancient signal detection returns proper structure."""
+        from markers.ancestry_composition import detect_ancient_signals
+        
+        result = detect_ancient_signals({})
+        
+        assert "methodology" in result
+        assert "populations" in result
+        
+        # Check all populations are present
+        for pop in ["WHG", "EEF", "STEPPE", "NEANDERTHAL", "DENISOVAN"]:
+            assert pop in result["populations"], f"Missing {pop} in results"
+            pop_data = result["populations"][pop]
+            assert "signal_strength" in pop_data
+            assert "markers_detected" in pop_data
+    
+    def test_signal_strength_categories(self):
+        """Test signal strength is properly categorized."""
+        from markers.ancestry_composition import detect_ancient_signals
+        
+        # Test with some markers
         test_genotypes = {
-            "rs1426654": "AA",  # European indicator
-            "rs16891982": "GG",
-            "rs12913832": "GG",
-            "rs4988235": "AA",
-            "rs3827760": "AA",  # NOT East Asian
+            "rs4988235": "AA",  # Steppe signal (lactase persistence)
+            "rs12913832": "GG",  # WHG signal (blue eyes)
+            "rs1426654": "AA",  # EEF signal (light skin)
         }
         
-        result = estimate_ancestry(test_genotypes)
+        result = detect_ancient_signals(test_genotypes)
         
-        if result.get("status") == "success":
-            assert "confidence_intervals" in result, "Should include confidence intervals"
-            assert "confidence" in result, "Should include confidence level"
-            assert "methodology" in result, "Should include methodology"
+        # Check that signals are detected
+        valid_strengths = ["not detected", "weak", "moderate", "strong"]
+        for pop, data in result["populations"].items():
+            assert data["signal_strength"] in valid_strengths, \
+                f"Invalid signal strength for {pop}: {data['signal_strength']}"
     
-    def test_ancestry_continental_only(self):
-        """Test ancestry reports continental level only."""
-        from markers.ancestry_composition import POPULATION_DESCRIPTIONS
-        
-        # Should only have continental-level populations
-        valid_pops = {"EUR", "AFR", "EAS", "SAS", "AMR", "MID", "OCE"}
-        
-        for pop in POPULATION_DESCRIPTIONS:
-            assert pop in valid_pops, f"Unexpected sub-regional population: {pop}"
-            
-            # Each should have limitations documented
-            info = POPULATION_DESCRIPTIONS[pop]
-            assert "limitations" in info, f"Population {pop} missing limitations"
-            assert len(info["limitations"]) > 0, f"Population {pop} has empty limitations"
-    
-    def test_ancestry_methodology_documented(self):
-        """Test ancestry summary includes methodology."""
+    def test_get_ancestry_summary_format(self):
+        """Test ancestry summary has correct format."""
         from markers.ancestry_composition import get_ancestry_summary
         
         result = get_ancestry_summary({})
         
+        assert result["analysis_type"] == "ancient_ancestral_signals"
         assert "disclaimer" in result
-        assert "methodology" in result
-        assert "limitations" in result["methodology"]
+        assert "signals" in result
+        assert "educational_note" in result
+        assert "modern ethnicity" in result["disclaimer"].lower() or \
+               "ancient" in result["disclaimer"].lower()
 
 
 class TestPRSRanges:

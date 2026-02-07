@@ -14,7 +14,7 @@ python comprehensive_analysis.py /path/to/dna_file.txt
 
 1. **Haplogroups are LOW CONFIDENCE** - Consumer arrays cannot reliably call haplogroups. Recommend dedicated Y-DNA/mtDNA testing (FTDNA, YFull) for accuracy.
 
-2. **Ancestry is CONTINENTAL ONLY** - Cannot distinguish sub-regions (Irish vs Scottish, Nigerian vs Ghanaian). All estimates include confidence intervals.
+2. **Ancestry shows ANCIENT SIGNALS, not modern ethnicity** - Modern ethnicity percentages are unreliable. Instead we detect signals from well-characterized ancient populations (WHG, Neolithic Farmers, Steppe, Neanderthal, Denisovan).
 
 3. **PRS scores show RANGES, not point estimates** - Polygenic risk scores have wide confidence intervals. Most conditions are 50-80% non-genetic.
 
@@ -67,11 +67,15 @@ Activate this skill when user mentions:
 - Recommendations for dedicated Y-DNA/mtDNA testing services
 - PMIDs for haplogroup marker sources
 
-### Continental Ancestry Only
-- Removed sub-regional claims (cannot distinguish neighboring populations)
-- **Confidence intervals** on all ancestry percentages
-- Explicit methodology limitations documented
-- PMIDs for all ancestry informative markers
+### Ancient Ancestral Signals (Replaces Modern Ethnicity)
+- **Western Hunter-Gatherers (WHG)** - Mesolithic Europeans (~15,000-8,000 BP)
+- **Early European Farmers (EEF)** - Neolithic Anatolians (~10,000-5,000 BP)
+- **Steppe Pastoralists** - Yamnaya/Bronze Age (~5,000-4,000 BP)
+- **Neanderthal Introgression** - Archaic human (~50,000-40,000 BP)
+- **Denisovan Introgression** - Archaic human (high-altitude adaptation)
+- Shows "Signals Detected" not percentages
+- Includes time periods and trait contributions
+- Based on ancient DNA studies with PMIDs
 
 ### PRS with Uncertainty Ranges
 - Percentile RANGES instead of point estimates
@@ -91,10 +95,10 @@ Activate this skill when user mentions:
 - Migration history context
 - PhyloTree/ISOGG standards
 
-### Ancestry Composition (continental only)
-- Population comparisons (EUR, AFR, EAS, SAS, AMR)
-- Admixture detection
-- Ancestry informative markers
+### Ancient Ancestry (scientifically grounded)
+- Detection of ancient population signals
+- Based on well-characterized ancient DNA
+- Includes archaic introgression (Neanderthal/Denisovan)
 
 ### Hereditary Cancer Panel
 - BRCA1/BRCA2 comprehensive

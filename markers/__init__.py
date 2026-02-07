@@ -77,8 +77,10 @@ from .haplogroups import (
     determine_mtdna_haplogroup, determine_y_haplogroup, analyze_haplogroups
 )
 from .ancestry_composition import (
-    ANCESTRY_INFORMATIVE_MARKERS, POPULATION_DESCRIPTIONS,
-    estimate_ancestry, detect_admixture, get_ancestry_summary
+    ANCIENT_POPULATIONS, ANCIENT_ANCESTRY_MARKERS,
+    detect_ancient_signals, get_ancestry_summary,
+    estimate_ancestry, detect_admixture,  # Legacy compatibility
+    calculate_wilson_confidence_interval
 )
 from .cancer_panel import (
     BRCA1_MARKERS, BRCA2_MARKERS, LYNCH_SYNDROME_MARKERS, OTHER_CANCER_MARKERS,
@@ -163,8 +165,8 @@ def _merge_markers():
     # Merge carrier (including rare diseases and cancer panel)
     all_carrier = {**CARRIER_MARKERS, **CARRIER_EXTENDED, **RARE_DISEASE_MARKERS, **HEREDITARY_CANCER_MARKERS}
     
-    # Merge ancestry (including AIMs and haplogroups)
-    all_ancestry = {**ANCESTRY_MARKERS, **ANCESTRY_INFORMATIVE_MARKERS, **MTDNA_MARKERS, **YCHROMOSOME_MARKERS}
+    # Merge ancestry (including ancient ancestry markers and haplogroups)
+    all_ancestry = {**ANCESTRY_MARKERS, **ANCIENT_ANCESTRY_MARKERS, **MTDNA_MARKERS, **YCHROMOSOME_MARKERS}
     
     return all_pharma, all_health, all_traits, all_prs, all_carrier, all_ancestry
 

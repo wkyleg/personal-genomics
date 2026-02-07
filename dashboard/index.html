@@ -1127,7 +1127,7 @@
                 <a href="#pharmacogenomics" class="nav-link">💊 Pharmacogenomics</a>
                 <a href="#health-risks" class="nav-link">📊 Health Risks</a>
                 <a href="#traits" class="nav-link">🧬 Traits</a>
-                <a href="#ancestry" class="nav-link">🌍 Ancestry</a>
+                <a href="#ancestry" class="nav-link">🏛️ Ancient Ancestry</a>
                 <a href="#carrier" class="nav-link">🧪 Carrier Status</a>
                 <a href="#sleep" class="nav-link">😴 Sleep</a>
                 <a href="#athletic" class="nav-link">🏃 Athletic</a>
@@ -1246,7 +1246,7 @@
             <section id="ancestry">
                 <div class="card">
                     <div class="card-header" onclick="toggleCard(this)">
-                        <h2>🌍 Ancestry & Haplogroups</h2>
+                        <h2>🏛️ Ancient Ancestral Signals & Haplogroups</h2>
                         <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="6,9 12,15 18,9"/>
                         </svg>
@@ -1771,17 +1771,146 @@
         }
         
         // ========================================
-        // Ancestry Section (with disclaimers and confidence intervals)
+        // Ancestry Section - Ancient Ancestral Signals
         // ========================================
         function renderAncestry() {
             const container = document.getElementById('ancestry-info');
             const haplogroups = data.haplogroups || {};
             const ancestry = data.ancestry || {};
+            const signals = ancestry.signals?.populations || {};
             
             let html = '';
             
-            // Haplogroup disclaimer - ALWAYS SHOW
+            // Educational intro about ancient ancestry
+            html += `
+                <div class="warning-banner" style="grid-column: 1 / -1; border-color: var(--info);">
+                    <h4 style="color: var(--info);">🏛️ Why Ancient Signals Instead of Modern Ethnicity?</h4>
+                    <p>
+                        Modern ethnicity percentages (e.g., "32% Irish") are <strong>scientifically unreliable</strong> 
+                        from consumer DNA arrays. Instead, we detect signals from <strong>well-characterized ancient populations</strong> 
+                        based on ancient DNA research.
+                    </p>
+                    <p style="margin-top: 0.5rem;">
+                        All modern Europeans are mixtures of: Mesolithic Hunter-Gatherers, Neolithic Farmers, 
+                        and Bronze Age Steppe Pastoralists — plus ~1-4% archaic human (Neanderthal/Denisovan) ancestry.
+                    </p>
+                </div>
+            `;
+            
+            // Ancient Population Signals
+            const populationOrder = ['WHG', 'EEF', 'STEPPE', 'NEANDERTHAL', 'DENISOVAN'];
+            const popIcons = {
+                'WHG': '🏹',
+                'EEF': '🌾',
+                'STEPPE': '🐴',
+                'NEANDERTHAL': '🦴',
+                'DENISOVAN': '🗻'
+            };
+            const popColors = {
+                'WHG': '#3b82f6',
+                'EEF': '#10b981',
+                'STEPPE': '#f59e0b',
+                'NEANDERTHAL': '#8b5cf6',
+                'DENISOVAN': '#ec4899'
+            };
+            
+            populationOrder.forEach(popKey => {
+                const pop = signals[popKey] || {};
+                const name = pop.name || popKey;
+                const period = pop.time_period || 'Unknown period';
+                const strength = pop.signal_strength || 'not detected';
+                const markerCount = pop.marker_count || 0;
+                const traits = pop.traits_contributed || [];
+                const markers = pop.markers_detected || [];
+                const pmids = pop.pmid || [];
+                const icon = popIcons[popKey] || '🧬';
+                const color = popColors[popKey] || 'var(--accent-primary)';
+                
+                // Signal strength indicator
+                let strengthBars = '';
+                let strengthLabel = '';
+                if (strength === 'strong') {
+                    strengthBars = '●●●';
+                    strengthLabel = 'STRONG SIGNAL';
+                } else if (strength === 'moderate') {
+                    strengthBars = '●●○';
+                    strengthLabel = 'MODERATE SIGNAL';
+                } else if (strength === 'weak') {
+                    strengthBars = '●○○';
+                    strengthLabel = 'WEAK SIGNAL';
+                } else {
+                    strengthBars = '○○○';
+                    strengthLabel = 'NOT DETECTED';
+                }
+                
+                html += `
+                    <div class="haplogroup-card" style="border-left: 4px solid ${color};">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <div class="haplogroup-type" style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.5rem;">${icon}</span>
+                                    ${name}
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                    ${period}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.25rem; letter-spacing: 2px; color: ${color};">${strengthBars}</div>
+                                <div style="font-size: 0.7rem; font-weight: 600; color: ${strength === 'not detected' ? 'var(--text-secondary)' : color};">
+                                    ${strengthLabel}
+                                </div>
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">
+                                    ${markerCount} marker${markerCount !== 1 ? 's' : ''} detected
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${traits.length > 0 && markerCount > 0 ? `
+                            <div style="margin-top: 1rem;">
+                                <div style="font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">
+                                    Traits Contributed by This Population:
+                                </div>
+                                <ul style="font-size: 0.8rem; color: var(--text-secondary); padding-left: 1.25rem; margin: 0;">
+                                    ${traits.slice(0, 4).map(t => `<li>${t}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        
+                        ${markers.length > 0 ? `
+                            <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                                <div style="font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">
+                                    Markers Detected:
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                    ${markers.slice(0, 4).map(m => `
+                                        <div style="font-size: 0.75rem; background: var(--bg-primary); padding: 0.35rem 0.6rem; border-radius: 4px;">
+                                            <strong>${m.gene || 'Unknown'}</strong>: ${m.trait || ''} 
+                                            <span class="mono" style="color: var(--accent-primary);">${m.genotype || ''}</span>
+                                        </div>
+                                    `).join('')}
+                                    ${markers.length > 4 ? `<span style="font-size: 0.75rem; color: var(--text-secondary);">+${markers.length - 4} more</span>` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${pmids.length > 0 ? `
+                            <div style="margin-top: 0.75rem;">
+                                ${renderPMIDs(pmids)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            // Haplogroup section (with disclaimer)
             if (haplogroups.mtDNA || haplogroups.Y_DNA) {
+                html += `
+                    <div style="grid-column: 1 / -1; margin-top: 1rem;">
+                        <h3 style="font-size: 1rem; margin-bottom: 1rem;">Maternal & Paternal Lineages (Haplogroups)</h3>
+                    </div>
+                `;
+                
                 html += `
                     <div class="warning-banner" style="grid-column: 1 / -1;">
                         <h4>⚠️ Haplogroup Limitation - LOW CONFIDENCE</h4>
@@ -1839,47 +1968,6 @@
                         </div>
                     `;
                 }
-            }
-            
-            // Ancestry composition with confidence intervals
-            const composition = ancestry.composition || ancestry.ancestry_proportions || {};
-            const confidenceIntervals = ancestry.confidence_intervals || {};
-            
-            if (Object.keys(composition).length > 0) {
-                const ancestryConfidence = ancestry.confidence || 'low';
-                const markersUsed = ancestry.markers_used || 'unknown';
-                
-                html += `
-                    <div class="haplogroup-card" style="grid-column: 1 / -1;">
-                        <div class="haplogroup-type">Ancestry Composition (Continental Level Only)</div>
-                        
-                        <div class="warning-banner" style="margin: 1rem 0; padding: 0.75rem;">
-                            <p style="margin: 0; font-size: 0.8rem;">
-                                <strong>⚠️ Continental ancestry only</strong> — Cannot distinguish sub-regions 
-                                (e.g., Irish vs Scottish, Nigerian vs Ghanaian)
-                            </p>
-                        </div>
-                        
-                        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
-                            ${Object.entries(composition).map(([pop, pct]) => {
-                                // Handle both string (with CI) and number formats
-                                let display = typeof pct === 'number' ? `${Math.round(pct)}%` : pct;
-                                let ci = confidenceIntervals[pop];
-                                
-                                return `
-                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--bg-primary); border-radius: 6px;">
-                                        <span style="font-weight: 500;">${pop}</span>
-                                        <span class="badge badge-info">${display}</span>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                        
-                        <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-secondary);">
-                            Confidence: ${ancestryConfidence} · Markers: ${markersUsed}
-                        </div>
-                    </div>
-                `;
             }
             
             if (!html) {
