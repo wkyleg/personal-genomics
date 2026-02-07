@@ -348,24 +348,30 @@ class AncientDNADataset(BaseDataset):
     - Neanderthal/Denisovan introgression
     """
     
-    DATASET_NAME = "ancient_dna"
-    DATASET_VERSION = "1.0.0"
+    name = "ancient_dna"
+    version = "1.0.0"
+    description = "Ancient DNA ancestral markers"
+    source_url = "curated_from_literature"
     
     def __init__(self, data_dir: Optional[Path] = None):
         super().__init__(data_dir or DATASETS_BASE_PATH / "ancient_dna")
         self._markers = {m.rsid: m for m in ANCIENT_MARKERS}
         
-    def download(self) -> bool:
+    def download(self, force: bool = False) -> bool:
         """
         No download needed - markers are curated from published literature.
         This method exists for API consistency.
         """
+        if self.is_downloaded and not force:
+            logger.info("Ancient DNA markers already loaded")
+            return True
+            
         self.data_dir.mkdir(parents=True, exist_ok=True)
         
         # Save marker database to JSON for transparency
         markers_file = self.data_dir / "curated_markers.json"
         markers_data = {
-            "version": self.DATASET_VERSION,
+            "version": self.version,
             "source": "Curated from published ancient DNA studies",
             "references": [
                 "Haak et al. 2015 (PMID: 25731166)",
@@ -392,14 +398,14 @@ class AncientDNADataset(BaseDataset):
             json.dump(markers_data, f, indent=2)
             
         # Save version info
-        version = DatasetVersion(
-            name=self.DATASET_NAME,
-            version=self.DATASET_VERSION,
+        version_info = DatasetVersion(
+            name=self.name,
+            version=self.version,
             downloaded=datetime.now(),
-            source_url="curated_from_literature",
+            source_url=self.source_url,
             record_count=len(ANCIENT_MARKERS),
         )
-        self.save_version(version)
+        self.save_version_info(version_info)
         
         return True
     
@@ -415,8 +421,8 @@ class AncientDNADataset(BaseDataset):
                 rsid=marker.rsid,
                 chromosome=marker.chromosome,
                 position=marker.position,
-                ref=marker.ancestral_allele,
-                alt=marker.derived_allele,
+                ref_allele=marker.ancestral_allele,
+                alt_allele=marker.derived_allele,
             )
         return None
     
